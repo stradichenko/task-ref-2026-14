@@ -1,0 +1,148 @@
+{
+  "title": "DM1 Prospective Data Platform -- Three-Month Plan",
+  "start_date": "2026-03-01",
+  "workstreams": [
+    {
+      "name": "Study and Data Design",
+      "color": "#2a9d8f",
+      "tasks": [
+        {
+          "label": "Define study data requirements",
+          "start": "2026-03-01",
+          "end": "2026-03-15"
+        },
+        {
+          "label": "Design ePRO / form instruments",
+          "start": "2026-03-08",
+          "end": "2026-03-22"
+        },
+        {
+          "label": "Agree coding and terminologies",
+          "start": "2026-03-15",
+          "end": "2026-03-29"
+        },
+        {
+          "label": "Define minimal FHIR profile set",
+          "start": "2026-03-22",
+          "end": "2026-04-05"
+        },
+        {
+          "label": "Draft RBAC and role matrix",
+          "start": "2026-03-15",
+          "end": "2026-03-29"
+        }
+      ]
+    },
+    {
+      "name": "Platform Implementation",
+      "color": "#e76f51",
+      "tasks": [
+        {
+          "label": "Configure forms and schedules",
+          "start": "2026-03-29",
+          "end": "2026-04-19"
+        },
+        {
+          "label": "Review mobile / portal prototypes",
+          "start": "2026-04-05",
+          "end": "2026-04-26"
+        },
+        {
+          "label": "Specify and test FHIR mappings",
+          "start": "2026-04-12",
+          "end": "2026-05-03"
+        },
+        {
+          "label": "Design OMOP ETL pipelines",
+          "start": "2026-04-12",
+          "end": "2026-05-10"
+        },
+        {
+          "label": "Detail audit trail and correction workflows",
+          "start": "2026-04-19",
+          "end": "2026-05-03"
+        }
+      ]
+    },
+    {
+      "name": "Governance and Compliance",
+      "color": "#264653",
+      "tasks": [
+        {
+          "label": "Draft data management plan",
+          "start": "2026-03-08",
+          "end": "2026-03-29"
+        },
+        {
+          "label": "Initiate DPIA",
+          "start": "2026-03-15",
+          "end": "2026-04-12"
+        },
+        {
+          "label": "Draft consent content",
+          "start": "2026-03-22",
+          "end": "2026-04-12"
+        },
+        {
+          "label": "Advance governance artefacts",
+          "start": "2026-04-12",
+          "end": "2026-05-10"
+        },
+        {
+          "label": "Finalize DMP and DPIA",
+          "start": "2026-05-10",
+          "end": "2026-05-31"
+        }
+      ]
+    },
+    {
+      "name": "Validation and Pilot",
+      "color": "#e9c46a",
+      "tasks": [
+        {
+          "label": "Develop DM test cases",
+          "start": "2026-05-03",
+          "end": "2026-05-17"
+        },
+        {
+          "label": "Validate RBAC and audit trails",
+          "start": "2026-05-10",
+          "end": "2026-05-24"
+        },
+        {
+          "label": "End-to-end FHIR to OMOP test",
+          "start": "2026-05-10",
+          "end": "2026-05-24"
+        },
+        {
+          "label": "Usability sessions (patients / site)",
+          "start": "2026-05-17",
+          "end": "2026-05-31"
+        },
+        {
+          "label": "Prepare pilot deployment",
+          "start": "2026-05-24",
+          "end": "2026-05-31"
+        }
+      ]
+    }
+  ],
+  "milestones": [
+    {
+      "label": "Data spec and forms complete",
+      "date": "2026-03-29"
+    },
+    {
+      "label": "Study config in test env",
+      "date": "2026-04-26"
+    },
+    {
+      "label": "OMOP ETL draft validated",
+      "date": "2026-05-10"
+    },
+    {
+      "label": "Pilot-ready",
+      "date": "2026-05-31"
+    }
+  ]
+}

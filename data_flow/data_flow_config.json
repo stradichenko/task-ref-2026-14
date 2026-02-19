@@ -1,0 +1,102 @@
+{
+  "title": "End-to-End Data Flow: DM1 Prospective Data Collection Platform",
+  "stages": [
+    {
+      "id": "capture",
+      "label": "Data Capture",
+      "sublabel": "Mobile App / Web Portal",
+      "layer": "client",
+      "governance": "Encrypted local store\nUser authentication"
+    },
+    {
+      "id": "transport",
+      "label": "Secure Transport",
+      "sublabel": "HTTPS + TLS 1.2+",
+      "layer": "network",
+      "governance": "JWT authentication\nScope enforcement"
+    },
+    {
+      "id": "gateway",
+      "label": "API Gateway",
+      "sublabel": "Traefik / NGINX",
+      "layer": "infrastructure",
+      "governance": "Token verification\nRate limiting\nAudit event per request"
+    },
+    {
+      "id": "validation",
+      "label": "Application Services",
+      "sublabel": "FastAPI / NestJS",
+      "layer": "application",
+      "governance": "FHIR profile validation\nEdit checks\nConsent verification"
+    },
+    {
+      "id": "operational",
+      "label": "Clinical Data Store",
+      "sublabel": "PostgreSQL (Pseudonymised)",
+      "layer": "data",
+      "governance": "Pseudonymous IDs only\nAppend-only audit trail\nData locking"
+    },
+    {
+      "id": "identity",
+      "label": "Identity Store",
+      "sublabel": "PostgreSQL (Segmented)",
+      "layer": "data",
+      "governance": "Network-segmented\nRestricted access\nAudit logging"
+    },
+    {
+      "id": "deidentification",
+      "label": "De-identification Pipeline",
+      "sublabel": "Airflow / Prefect",
+      "layer": "pipeline",
+      "governance": "Consent check\nVersion-controlled\nFull provenance metadata"
+    },
+    {
+      "id": "mapping",
+      "label": "FHIR-to-OMOP Mapping",
+      "sublabel": "WhiteRabbit / Usagi / ETL",
+      "layer": "pipeline",
+      "governance": "Vocabulary resolution\nUnmapped value flagging\nMapping review"
+    },
+    {
+      "id": "omop",
+      "label": "OMOP CDM Warehouse",
+      "sublabel": "PostgreSQL + Atlas",
+      "layer": "research",
+      "governance": "Isolated database\nAccess request approval\nTime-limited access"
+    },
+    {
+      "id": "research",
+      "label": "Research & Analytics",
+      "sublabel": "RStudio / JupyterLab / Atlas",
+      "layer": "research",
+      "governance": "Purpose-bound access\nLogged queries\nData extracts governed"
+    },
+    {
+      "id": "external",
+      "label": "External Sharing",
+      "sublabel": "FHIR Facade / Registries / EHDS",
+      "layer": "external",
+      "governance": "Data sharing agreement\nMinimum necessary\nTransparency logging"
+    }
+  ],
+  "layer_colours": {
+    "client": "#4A90D9",
+    "network": "#6C5CE7",
+    "infrastructure": "#00B894",
+    "application": "#E17055",
+    "data": "#FDCB6E",
+    "pipeline": "#A29BFE",
+    "research": "#55EFC4",
+    "external": "#636E72"
+  },
+  "observability": {
+    "label": "Observability, Audit & Compliance",
+    "sublabel": "Prometheus / Grafana / Loki + Append-only Audit Log",
+    "note": "Every stage emits structured audit events to the central audit trail"
+  },
+  "iam": {
+    "label": "Identity & Access Management",
+    "sublabel": "Keycloak (OpenID Connect / OAuth 2.0)",
+    "note": "Authentication and RBAC enforcement at every layer"
+  }
+}

@@ -1,0 +1,807 @@
+---
+title: "Exploratory Analysis of Clinical Variables Over Time"
+subtitle: "A proof-of-concept for the DM1 Dynamic Analysis System"
+author: "Task Ref. 2026-14"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    code_folding: show
+    fig_width: 10
+    fig_height: 6
+    self_contained: true
+  github_document:
+    toc: true
+    toc_depth: 3
+    html_preview: false
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  message    = FALSE,
+  warning    = FALSE,
+  fig.align  = "center",
+  fig.path   = "figures/",
+  fig.retina = 2,
+  dpi        = 150
+)
+```
+
+## Introduction
+
+We are designing a **dynamic analysis system** for a database containing
+clinical, genomic, and proteomic data from **200 patients with Myotonic
+Dystrophy Type 1 (DM1)**, collected across **25 hospitals** and entered by
+**13 different personnel**.
+
+Before building complex pipelines, any competent data team starts the same way:
+**look at the data**. This document walks through a short sequence of
+exploratory analyses that progress from simple descriptive plots to
+time-to-event modelling---the kind of work the system's analytical layer
+(interactive notebooks, parameterised modules, materialised views) would enable
+from day one.
+
+### Why these analyses matter for DM1
+
+Myotonic Dystrophy Type 1 is the most common adult-onset muscular dystrophy.
+It is a **multi-systemic** disorder: beyond progressive muscle weakness,
+patients experience cardiac conduction defects, endocrine abnormalities,
+cataracts, and cognitive impairment. A well-designed analytical system must
+therefore support exploration across **multiple clinical domains** and detect
+subtle longitudinal changes that unfold over months to years.
+
+### Data source
+
+We use the publicly available
+[`random.cdisc.data`](https://insightsengineering.github.io/random.cdisc.data/)
+package from the [pharmaverse](https://pharmaverse.org/) ecosystem, which
+generates synthetic CDISC ADaM datasets that mirror the structure of a real
+multi-centre clinical trial.
+
+| Dataset    | CDISC domain | Description                     | Key variables                  |
+|:-----------|:-------------|:--------------------------------|:-------------------------------|
+| `cadsl`    | ADSL         | Subject-Level Analysis          | AGE, SEX, RACE, ARM, BMRKR1/2 |
+| `cadvs`    | ADVS         | Vital Signs Analysis            | SYSBP, DIABP, PULSE per visit  |
+| `cadlb`    | ADLB         | Laboratory Analysis             | ALT, CRP, IGA per visit        |
+| `cadaette` | ADAETTE      | Time-to-Adverse-Event Analysis  | Time, event/censor, by arm     |
+
+---
+
+## Environment setup
+
+All dependencies are declared in the project's Nix flake, so inside
+`nix develop` every package below is available without manual installation.
+
+```{r load-packages}
+# Install helper packages if not already present
+for (pkg in c("gridExtra", "broom", "scales", "plotly", "htmltools", "webshot2")) {
+  if (!requireNamespace(pkg, quietly = TRUE))
+    install.packages(pkg, repos = "https://cloud.r-project.org", quiet = TRUE)
+}
+
+library(tidyverse)
+library(survival)
+library(random.cdisc.data)
+library(gridExtra)
+library(broom)
+library(scales)
+
+# Detect output format: interactive plotly for HTML, static ggplot for markdown
+is_html <- knitr::is_html_output()
+if (is_html) {
+  library(plotly)
+  library(htmltools)
+}
+```
+
+```{r custom-css, echo=FALSE, results='asis'}
+if (knitr::is_html_output()) cat('
+<style>
+/* ---------- plotly chart sizing ---------- */
+.html-widget {
+  display: block;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.plotly.html-widget {
+  width: 100% !important;
+}
+
+/* ---------- figure captions ---------- */
+.figure-caption {
+  text-align: center;
+  font-style: italic;
+  color: #555;
+  margin-top: 10px;
+  margin-bottom: 24px;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+/* ---------- fullscreen mode ---------- */
+.js-plotly-plot:fullscreen {
+  background: white;
+  padding: 20px;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+.js-plotly-plot:fullscreen .plot-container,
+.js-plotly-plot:fullscreen .svg-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* close-fullscreen floating button (only visible in fullscreen) */
+.close-fullscreen-btn {
+  display: none;
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  z-index: 99999;
+  background: rgba(68,68,68,0.85);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.close-fullscreen-btn:hover {
+  background: rgba(40,40,40,0.95);
+}
+</style>
+
+<button class="close-fullscreen-btn" id="closeFullscreenBtn" onclick="document.exitFullscreen()">
+  ✕ Close fullscreen
+</button>
+
+<script>
+document.addEventListener("fullscreenchange", function() {
+  var btn = document.getElementById("closeFullscreenBtn");
+  if (document.fullscreenElement) {
+    btn.style.display = "block";
+    /* Move the button into the fullscreen element so it is visible */
+    document.fullscreenElement.appendChild(btn);
+    Plotly.Plots.resize(document.fullscreenElement);
+  } else {
+    btn.style.display = "none";
+    document.body.appendChild(btn);
+    /* Resize all charts back to container width */
+    document.querySelectorAll(".js-plotly-plot").forEach(function(gd) {
+      Plotly.Plots.resize(gd);
+    });
+  }
+});
+</script>
+')
+```
+
+```{r plot-helpers, echo=FALSE}
+if (is_html) {
+  fs_button <- list(
+    name = "Fullscreen",
+    icon = list(
+      path  = "M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z",
+      width = 24, height = 24
+    ),
+    click = htmlwidgets::JS("function(gd) {
+      if (!document.fullscreenElement) {
+        if (gd.requestFullscreen) {
+          gd.requestFullscreen().then(function() {
+            Plotly.Plots.resize(gd);
+          });
+        }
+      } else {
+        document.exitFullscreen();
+      }
+    }")
+  )
+
+  add_plotly_config <- function(p) {
+    p %>% plotly::config(
+      modeBarButtonsToAdd = list(fs_button),
+      displaylogo = FALSE,
+      responsive = TRUE
+    )
+  }
+}
+```
+
+```{r seed}
+set.seed(42)
+```
+
+---
+
+## 1 &mdash; Data loading and preparation
+
+We load four cached CDISC datasets and immediately inspect their dimensions.
+
+```{r load-data}
+data("cadsl");    adsl    <- cadsl
+data("cadvs");    advs    <- cadvs
+data("cadlb");    adlb    <- cadlb
+data("cadaette"); adaette <- cadaette
+
+tibble(
+  Dataset  = c("ADSL", "ADVS", "ADLB", "ADAETTE"),
+  Rows     = c(nrow(adsl), nrow(advs), nrow(adlb), nrow(adaette)),
+  Columns  = c(ncol(adsl), ncol(advs), ncol(adlb), ncol(adaette))
+) %>% knitr::kable(align = "lrr")
+```
+
+The cached data ships with **400 subjects**. Our DM1 study has 200, so we
+subsample to match the intended scale. In a production system this step would
+not exist---the warehouse query would simply return the real cohort.
+
+```{r subsample}
+selected_ids <- adsl %>%
+  distinct(USUBJID) %>%
+  slice_sample(n = 200) %>%
+  pull(USUBJID)
+
+adsl    <- adsl    %>% filter(USUBJID %in% selected_ids)
+advs    <- advs    %>% filter(USUBJID %in% selected_ids)
+adlb    <- adlb    %>% filter(USUBJID %in% selected_ids)
+adaette <- adaette %>% filter(USUBJID %in% selected_ids)
+```
+
+After subsampling we have **`r n_distinct(adsl$USUBJID)` patients** across
+**`r n_distinct(adsl$SITEID)` sites** and **`r n_distinct(adsl$ARM)`
+treatment arms** (`r paste(levels(adsl$ARM), collapse = ", ")`).
+
+---
+
+## 2 &mdash; Demographic overview by treatment arm
+
+> **Complexity level:** descriptive / univariate.
+
+The first step in any clinical analysis is understanding *who* is in the study.
+In a multi-centre trial we need to verify that treatment arms are balanced with
+respect to key covariates---imbalances in age or sex could confound every
+downstream comparison. In DM1 specifically, **age at onset correlates with CTG
+repeat length**, so any distributional skew is a red flag.
+
+We show two complementary views:
+
+- **Left panel:** patient counts by treatment arm and sex (are groups balanced?).
+- **Right panel:** overlaid age density curves by arm (are the age distributions similar?).
+
+```{r demographics, fig.width=11, fig.height=5}
+# Patient counts by arm and sex
+demo_summary <- adsl %>%
+  count(ARM, SEX, name = "n_patients") %>%
+  mutate(ARM = fct_reorder(ARM, n_patients, .fun = sum))
+
+p1_left <- ggplot(demo_summary, aes(x = ARM, y = n_patients, fill = SEX)) +
+  geom_col(position = "dodge", width = 0.7, colour = "grey30", linewidth = 0.3) +
+  scale_fill_manual(
+    values = c("F" = "#E07B91", "M" = "#6BAED6"),
+    labels = c("F" = "Female", "M" = "Male")
+  ) +
+  labs(x = NULL, y = "Number of patients", fill = "Sex") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1),
+        legend.position = "top")
+
+# Age density by arm
+p1_right <- ggplot(adsl, aes(x = AGE, fill = ARM, colour = ARM)) +
+  geom_density(alpha = 0.25, linewidth = 0.6) +
+  labs(x = "Age (years)", y = "Density",
+       fill = "Treatment arm", colour = "Treatment arm") +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "top")
+
+if (is_html) {
+  subplot(
+    ggplotly(p1_left,  tooltip = c("x", "y", "fill")) %>%
+      layout(legend = list(orientation = "h", y = 1.12)),
+    ggplotly(p1_right, tooltip = c("x", "y", "fill")) %>%
+      layout(legend = list(orientation = "h", y = 1.12)),
+    nrows = 1, shareY = FALSE, titleX = TRUE, titleY = TRUE, margin = 0.06
+  ) %>%
+    layout(
+      title = list(text = "Demographic Overview by Treatment Arm", x = 0.5),
+      margin = list(t = 80)
+    ) %>%
+    add_plotly_config()
+} else {
+  grid.arrange(p1_left, p1_right, ncol = 2)
+}
+```
+
+<p align="center"><em><strong>Fig. 1.</strong> Demographic overview by treatment arm. Left: patient counts by arm and sex. Right: overlaid age density curves by treatment arm.</em></p>
+
+**What we see:** The three arms are roughly balanced in size and sex ratio. Age
+distributions overlap substantially, suggesting randomisation achieved its goal.
+A formal test (e.g. ANOVA on age, chi-square on sex) could confirm this, but for
+an exploratory pass the visual check is sufficient.
+
+---
+
+## 3 &mdash; Vital signs trajectories over time
+
+> **Complexity level:** longitudinal / time-related.
+
+DM1 is a multi-systemic disease with well-documented **cardiovascular
+involvement**---cardiac conduction defects, arrhythmias, and in some cohorts
+altered blood pressure regulation. Monitoring **systolic blood pressure (SBP)**
+across scheduled study visits is therefore clinically meaningful.
+
+We use a **spaghetti-plus-mean** design:
+
+- **Thin grey lines:** individual patient trajectories, revealing the full range
+  of within-patient variability.
+- **Coloured ribbon + line:** group mean $\pm$ 95% confidence interval by arm,
+  showing the central trend.
+
+This layered approach lets the reader simultaneously assess heterogeneity and
+treatment-level patterns without suppressing the underlying data.
+
+```{r sbp-trajectories, fig.width=12, fig.height=5}
+sbp <- advs %>%
+  filter(
+    PARAMCD == "SYSBP",
+    AVISIT  != "",
+    !is.na(AVAL),
+    !is.na(AVISITN)
+  ) %>%
+  select(USUBJID, ARM, AVISIT, AVISITN, AVAL)
+
+# Summary statistics per arm per visit
+sbp_summary <- sbp %>%
+  group_by(ARM, AVISIT, AVISITN) %>%
+  summarise(
+    mean_val = mean(AVAL, na.rm = TRUE),
+    se       = sd(AVAL, na.rm = TRUE) / sqrt(n()),
+    n        = n(),
+    .groups  = "drop"
+  ) %>%
+  mutate(
+    lo = mean_val - 1.96 * se,
+    hi = mean_val + 1.96 * se
+  )
+
+p2_static <- ggplot() +
+  geom_line(
+    data = sbp,
+    aes(x = AVISITN, y = AVAL, group = USUBJID),
+    alpha = 0.08, linewidth = 0.3, colour = "grey50"
+  ) +
+  geom_ribbon(
+    data = sbp_summary,
+    aes(x = AVISITN, ymin = lo, ymax = hi, fill = ARM),
+    alpha = 0.25
+  ) +
+  geom_line(
+    data = sbp_summary,
+    aes(x = AVISITN, y = mean_val, colour = ARM),
+    linewidth = 0.9
+  ) +
+  geom_point(
+    data = sbp_summary,
+    aes(x = AVISITN, y = mean_val, colour = ARM),
+    size = 1.8
+  ) +
+  facet_wrap(~ ARM, nrow = 1) +
+  scale_x_continuous(breaks = sort(unique(sbp_summary$AVISITN))) +
+  labs(
+    x = "Analysis visit number",
+    y = "Systolic BP (Pa)",
+    colour = "Arm", fill = "Arm"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "none",
+        strip.text = element_text(face = "bold"))
+
+if (is_html) {
+  arm_colours <- setNames(
+    scales::hue_pal()(n_distinct(sbp_summary$ARM)),
+    levels(sbp_summary$ARM)
+  )
+
+  p2_ly <- plot_ly()
+  for (arm in unique(sbp_summary$ARM)) {
+    arm_sbp  <- sbp %>% filter(ARM == arm)
+    arm_summ <- sbp_summary %>% filter(ARM == arm) %>% arrange(AVISITN)
+
+    # Individual traces (light, no legend entry)
+    for (uid in unique(arm_sbp$USUBJID)) {
+      d <- arm_sbp %>% filter(USUBJID == uid)
+      p2_ly <- p2_ly %>% add_lines(
+        data = d, x = ~AVISITN, y = ~AVAL,
+        line = list(color = "rgba(160,160,160,0.12)", width = 0.8),
+        hoverinfo = "text",
+        text = ~paste0("Patient: ", USUBJID, "<br>Visit: ", AVISIT,
+                       "<br>SBP: ", round(AVAL, 1)),
+        showlegend = FALSE, legendgroup = arm
+      )
+    }
+
+    # 95% CI ribbon
+    p2_ly <- p2_ly %>%
+      add_ribbons(
+        data = arm_summ, x = ~AVISITN, ymin = ~lo, ymax = ~hi,
+        fillcolor = paste0(arm_colours[arm], "33"),
+        line = list(color = "transparent"),
+        showlegend = FALSE, legendgroup = arm
+      )
+
+    # Mean line + points
+    p2_ly <- p2_ly %>%
+      add_trace(
+        data = arm_summ, x = ~AVISITN, y = ~mean_val,
+        type = "scatter", mode = "lines+markers",
+        line = list(color = arm_colours[arm], width = 2.5),
+        marker = list(color = arm_colours[arm], size = 7),
+        name = arm, legendgroup = arm,
+        hoverinfo = "text",
+        text = ~paste0(arm, "<br>Visit: ", AVISIT,
+                       "<br>Mean SBP: ", round(mean_val, 1),
+                       "<br>95% CI: [", round(lo, 1), ", ", round(hi, 1), "]",
+                       "<br>n = ", n)
+      )
+  }
+
+  p2_ly %>% layout(
+    title  = list(text = "Systolic Blood Pressure Trajectories Over Visits"),
+    xaxis  = list(title = "Analysis visit number"),
+    yaxis  = list(title = "Systolic BP (Pa)"),
+    legend = list(orientation = "h", y = -0.15),
+    hovermode = "closest"
+  ) %>%
+  add_plotly_config()
+} else {
+  p2_static
+}
+```
+
+<p align="center"><em><strong>Fig. 2.</strong> Systolic blood pressure trajectories over scheduled study visits. Individual patient traces (grey) are overlaid with group mean ± 95 % CI by treatment arm.</em></p>
+
+**What we see:** Mean SBP stays relatively stable across visits in all three
+arms, with wide individual variability (a realistic pattern for a heterogeneous
+disease). In a real DM1 dataset we would also overlay **cardiac conduction
+metrics** (PR interval, QTc) from the ECG domain---cross-modal exploration that
+the proposed system is designed to support.
+
+---
+
+## 4 &mdash; Laboratory biomarker change from baseline
+
+> **Complexity level:** longitudinal / safety monitoring.
+
+In DM1, hepatic and inflammatory markers deserve close surveillance:
+
+- **ALT (Alanine Aminotransferase):** a standard liver-function marker. Many
+  candidate therapies for muscular dystrophies carry hepatotoxicity risk.
+- **CRP (C-Reactive Protein):** a systemic inflammation marker increasingly
+  studied in muscular dystrophies, where chronic low-grade inflammation
+  accompanies muscle degeneration.
+
+Showing **change from baseline** (CHG) rather than raw values lets us focus on
+*within-patient shifts*---the natural framing for a longitudinal study and for
+the materialised views we proposed in the analysis system (the `patient-level
+summary` view stores exactly this kind of derived quantity).
+
+```{r lab-chg-baseline, fig.width=11, fig.height=8}
+lab_chg <- adlb %>%
+  filter(
+    PARAMCD %in% c("ALT", "CRP"),
+    AVISIT  != "",
+    !is.na(CHG),
+    !is.na(AVISITN)
+  ) %>%
+  select(USUBJID, ARM, PARAMCD, PARAM, AVISIT, AVISITN, CHG) %>%
+  mutate(AVISIT = fct_reorder(AVISIT, AVISITN))
+
+p3_static <- ggplot(lab_chg, aes(x = AVISIT, y = CHG, fill = ARM)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40") +
+  geom_boxplot(
+    outlier.size = 0.7, outlier.alpha = 0.4,
+    linewidth = 0.35, width = 0.7,
+    position = position_dodge(width = 0.8)
+  ) +
+  facet_wrap(~ PARAM, scales = "free_y", ncol = 1) +
+  labs(
+    x    = "Scheduled visit",
+    y    = "Change from baseline",
+    fill = "Treatment arm"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    axis.text.x = element_text(angle = 35, hjust = 1, size = 8),
+    legend.position = "top",
+    strip.text = element_text(face = "bold", size = 11)
+  )
+
+if (is_html) {
+  params <- unique(lab_chg$PARAMCD)
+  p3_panels <- lapply(params, function(pc) {
+    d <- lab_chg %>% filter(PARAMCD == pc)
+    plot_ly(
+      data = d, x = ~AVISIT, y = ~CHG, color = ~ARM,
+      type = "box",
+      hoverinfo = "y+name",
+      showlegend = (pc == params[1])
+    ) %>%
+      layout(
+        boxmode = "group",
+        annotations = list(
+          text = unique(d$PARAM), xref = "paper", yref = "paper",
+          x = 0.5, y = 1.06, showarrow = FALSE,
+          font = list(size = 14, face = "bold")
+        ),
+        shapes = list(list(
+          type = "line", x0 = 0, x1 = 1, xref = "paper",
+          y0 = 0, y1 = 0, line = list(color = "grey", dash = "dash")
+        ))
+      )
+  })
+
+  subplot(p3_panels, nrows = length(params), shareX = TRUE, titleY = TRUE) %>%
+    layout(
+      title  = list(text = "Change from Baseline in ALT and CRP Over Visits"),
+      yaxis  = list(title = "Change from baseline"),
+      yaxis2 = list(title = "Change from baseline"),
+      boxmode = "group",
+      legend  = list(orientation = "h", y = -0.1),
+      margin  = list(t = 70)
+    ) %>%
+    add_plotly_config()
+} else {
+  p3_static
+}
+```
+
+<p align="center"><em><strong>Fig. 3.</strong> Change from baseline in ALT and CRP across study visits by treatment arm. The dashed line marks zero change; boxes show the inter-quartile range with whiskers extending to 1.5 × IQR.</em></p>
+
+**What we see:** Both ALT and CRP change distributions remain centred around
+zero with no obvious arm-level divergence---a reassuring safety signal.
+The inter-quartile ranges widen slightly at later visits, consistent with
+increasing variability as follow-up time grows and some patients are lost. In a
+real DM1 study, we would flag individual patients whose ALT exceeds 3$\times$
+ULN (Hy's Law boundary) and join their data with the genomic modality to look
+for variant-level associations---exactly the cross-modal workflow the system is
+designed to enable.
+
+---
+
+## 5 &mdash; Kaplan-Meier: time to first adverse event
+
+> **Complexity level:** time-to-event / inferential.
+
+Time-to-event analysis is the most information-rich way to compare safety
+profiles across treatment arms. The Kaplan-Meier estimator gives non-parametric
+survival curves; the **log-rank test** provides a formal between-arm comparison.
+
+In the proposed analysis system, this would be exposed as a **parameterised
+module**: the researcher selects the event of interest (any AE, serious AE,
+grade 3--5 AE), stratification variables, and optional covariates via a
+configuration file, and the pipeline produces the curves and test results
+automatically.
+
+```{r tte-prepare}
+# Available time-to-event endpoints
+tte_params <- adaette %>% distinct(PARAMCD, PARAM)
+knitr::kable(tte_params, col.names = c("Code", "Description"))
+```
+
+We select **AETTE1** (*time to first occurrence of any adverse event*)---the
+broadest safety endpoint.
+
+```{r tte-fit}
+tte_data <- adaette %>%
+  filter(
+    PARAMCD == "AETTE1",
+    !is.na(AVAL),
+    !is.na(CNSR)
+  ) %>%
+  select(USUBJID, ARM, AVAL, CNSR, PARAM) %>%
+  distinct(USUBJID, .keep_all = TRUE) %>%
+  mutate(
+    event    = 1 - CNSR,
+    time_wks = AVAL / 7
+  )
+
+event_label <- tte_data %>% pull(PARAM) %>% unique() %>% first()
+
+# Kaplan-Meier fit
+surv_obj <- Surv(time = tte_data$time_wks, event = tte_data$event)
+km_fit   <- survfit(surv_obj ~ ARM, data = tte_data)
+
+# Log-rank test
+lr_test <- survdiff(surv_obj ~ ARM, data = tte_data)
+lr_pval <- pchisq(lr_test$chisq, df = length(lr_test$n) - 1, lower.tail = FALSE)
+```
+
+**Events observed:** `r sum(tte_data$event)` / `r nrow(tte_data)` patients
+experienced the event.
+**Log-rank p-value:** `r sprintf("%.4f", lr_pval)`.
+
+```{r km-plot, fig.width=10, fig.height=7}
+km_tidy <- tidy(km_fit) %>%
+  mutate(ARM = str_remove(strata, "^ARM="))
+
+# Number-at-risk at evenly spaced time points
+risk_times   <- seq(0, max(km_tidy$time, na.rm = TRUE), length.out = 6) %>% round(1)
+risk_summary <- summary(km_fit, times = risk_times)
+risk_tbl     <- tibble(
+  time   = risk_summary$time,
+  n.risk = risk_summary$n.risk,
+  ARM    = str_remove(risk_summary$strata, "^ARM=")
+)
+
+if (is_html) {
+  arm_colours <- setNames(
+    scales::hue_pal()(n_distinct(km_tidy$ARM)),
+    unique(km_tidy$ARM)
+  )
+
+  p4_ly <- plot_ly()
+  for (arm in unique(km_tidy$ARM)) {
+    d <- km_tidy %>% filter(ARM == arm) %>% arrange(time)
+
+    # CI ribbon
+    p4_ly <- p4_ly %>%
+      add_ribbons(
+        data = d, x = ~time, ymin = ~conf.low, ymax = ~conf.high,
+        fillcolor = paste0(arm_colours[arm], "22"),
+        line = list(color = "transparent"),
+        showlegend = FALSE, legendgroup = arm,
+        hoverinfo = "skip"
+      )
+
+    # Step curve
+    p4_ly <- p4_ly %>%
+      add_trace(
+        data = d, x = ~time, y = ~estimate,
+        type = "scatter", mode = "lines",
+        line = list(color = arm_colours[arm], width = 2.2, shape = "hv"),
+        name = arm, legendgroup = arm,
+        hoverinfo = "text",
+        text = ~paste0(
+          arm,
+          "<br>Time: ", round(time, 1), " weeks",
+          "<br>Event-free: ", scales::percent(estimate, accuracy = 0.1),
+          "<br>95% CI: [", scales::percent(conf.low, accuracy = 0.1),
+          ", ", scales::percent(conf.high, accuracy = 0.1), "]",
+          "<br>n.risk: ", n.risk,
+          "<br>n.event: ", n.event
+        )
+      )
+
+    # Censor tick marks
+    censored <- d %>% filter(n.censor > 0)
+    if (nrow(censored) > 0) {
+      p4_ly <- p4_ly %>%
+        add_markers(
+          data = censored, x = ~time, y = ~estimate,
+          marker = list(symbol = "line-ns", size = 8,
+                        color = arm_colours[arm], line = list(width = 1.5)),
+          showlegend = FALSE, legendgroup = arm,
+          hoverinfo = "text",
+          text = ~paste0("Censored (n=", n.censor, ")")
+        )
+    }
+  }
+
+  p4_ly %>% layout(
+    title   = list(text = paste0(
+      "Kaplan-Meier: Time to First Adverse Event",
+      "<br><sup>Log-rank p = ", sprintf("%.4f", lr_pval), "</sup>"
+    )),
+    xaxis   = list(title = "Time (weeks)"),
+    yaxis   = list(title = "Event-free probability",
+                   tickformat = ".0%", range = c(0, 1)),
+    legend  = list(orientation = "h", y = -0.15),
+    hovermode = "closest",
+    margin  = list(t = 80)
+  ) %>%
+  add_plotly_config()
+} else {
+  # Static fallback for github_document
+  p_km <- ggplot(km_tidy, aes(x = time, y = estimate, colour = ARM, fill = ARM)) +
+    geom_step(linewidth = 0.8) +
+    geom_rect(
+      aes(
+        xmin = time,
+        xmax = lead(time, default = max(time)),
+        ymin = conf.low, ymax = conf.high
+      ),
+      alpha = 0.10, colour = NA
+    ) +
+    annotate(
+      "text",
+      x = max(km_tidy$time) * 0.65, y = 0.15,
+      label = sprintf("Log-rank p = %.4f", lr_pval),
+      size = 3.5, fontface = "italic", colour = "grey30"
+    ) +
+    scale_y_continuous(labels = percent_format(), limits = c(0, 1)) +
+    labs(
+      x      = "Time (weeks)",
+      y      = "Event-free probability",
+      colour = "Treatment arm",
+      fill   = "Treatment arm"
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(legend.position = "top")
+
+  p_risk <- ggplot(risk_tbl, aes(x = time, y = ARM, label = n.risk)) +
+    geom_text(size = 3) +
+    labs(x = "Time (weeks)", y = NULL, title = "Number at risk") +
+    theme_minimal(base_size = 9) +
+    theme(
+      panel.grid = element_blank(),
+      plot.title = element_text(size = 9, face = "bold"),
+      axis.text.y = element_text(face = "bold")
+    )
+
+  grid.arrange(p_km, p_risk, ncol = 1, heights = c(4, 1))
+}
+```
+
+<p align="center"><em><strong>Fig. 4.</strong> Kaplan–Meier curves for time to first adverse event by treatment arm, with 95 % confidence bands and censoring tick marks. The log-rank test p-value is annotated.</em></p>
+
+**What we see:** The Kaplan-Meier curves separate modestly between arms, with a
+log-rank p-value of **`r sprintf("%.4f", lr_pval)`**---nominally significant at
+the 0.05 level. In a real DM1 study this would warrant further investigation
+with a **Cox proportional-hazards model** adjusting for baseline covariates
+(age, sex, disease severity, CTG repeat length), and the result would be
+cross-referenced with the genomic and proteomic modalities to identify
+biological correlates of adverse event risk.
+
+---
+
+## Summary
+
+The four analyses above trace a deliberate progression:
+
+| #   | Analysis                      | Type                       | System capability it demonstrates               |
+|:----|:------------------------------|:---------------------------|:-------------------------------------------------|
+| 1   | Demographic overview          | Descriptive                | Fast queries over the ADSL materialised view     |
+| 2   | SBP trajectories              | Longitudinal / time        | Cross-visit exploration of vital signs           |
+| 3   | ALT & CRP change from BL     | Longitudinal / safety      | Change-from-baseline monitoring for dashboards   |
+| 4   | KM time to first AE           | Time-to-event / inferential| Parameterised survival module for notebooks      |
+
+In the proposed dynamic analysis system, each of these would be:
+
+- **Runnable from a notebook** (JupyterLab / RStudio) connected to the OMOP CDM
+  warehouse via read-only, role-scoped credentials.
+- **Surfaced in dashboards** (Grafana for operational metrics, Apache Superset
+  for research exploration).
+- **Schedulable as automated reports** via Airflow or Prefect DAGs, with output
+  rendered to PDF/HTML and distributed to defined recipients.
+- **Version-controlled and reproducible**, with every result tied to a code
+  version, data-cut date, and parameter set.
+
+---
+
+## Reproducibility
+
+This analysis runs inside the project's Nix development shell. To reproduce:
+
+```bash
+# Enter the environment (all dependencies resolved automatically)
+nix develop
+
+# Render this document
+Rscript -e 'rmarkdown::render("small_exploratory_analysis/exploratory_analysis.Rmd")'
+```
+
+| Package              | Purpose                                 |
+|:---------------------|:----------------------------------------|
+| `tidyverse`          | Data wrangling and ggplot2 plotting     |
+| `survival`           | Kaplan-Meier estimation, log-rank test  |
+| `random.cdisc.data`  | Synthetic CDISC ADaM datasets           |
+| `plotly`             | Interactive HTML visualisations         |
+| `gridExtra`          | Multi-panel plot arrangement (fallback) |
+| `broom`              | Tidy survival model output              |
+| `scales`             | Axis formatting                         |
+| `rmarkdown` / `knitr`| Document rendering                      |

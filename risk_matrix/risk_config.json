@@ -1,0 +1,40 @@
+{
+  "title": "Risk Matrix: DM1 Prospective Data Collection Platform",
+  "subtitle": "Three-Month Project Plan",
+  "likelihood_levels": ["Very Low", "Low", "Medium", "High", "Very High"],
+  "impact_levels": ["Negligible", "Minor", "Moderate", "Major", "Critical"],
+  "risks": [
+    {
+      "id": "R1",
+      "label": "FHIR/OMOP mapping\ncomplexity",
+      "description": "Underestimating the complexity of mapping between study-specific variables, FHIR resources, and OMOP CDM, delaying research-ready datasets.",
+      "likelihood": 3,
+      "impact": 4,
+      "mitigation": "Prioritise a minimal, high-value variable subset for complete end-to-end mapping; plan subsequent phases to broaden coverage."
+    },
+    {
+      "id": "R2",
+      "label": "Suboptimal usability\nfor DM1 patients",
+      "description": "Poor usability for patients and caregivers reducing adherence or introducing systematic data quality issues.",
+      "likelihood": 2,
+      "impact": 4,
+      "mitigation": "Early and repeated usability testing with accessibility-focused design principles."
+    },
+    {
+      "id": "R3",
+      "label": "Slow governance\nand legal reviews",
+      "description": "Governance and legal reviews proceeding more slowly than technical implementation, blocking deployment.",
+      "likelihood": 3,
+      "impact": 3,
+      "mitigation": "Start governance work in Month 1; maintain a clear review calendar; engage ethics and data protection stakeholders early."
+    },
+    {
+      "id": "R4",
+      "label": "Technical integration\nof FOSS components",
+      "description": "Integration risks in combining Keycloak, PostgreSQL, FHIR libraries, OMOP tooling, and orchestration frameworks.",
+      "likelihood": 2,
+      "impact": 3,
+      "mitigation": "Early integration environment resembling production; incremental end-to-end testing throughout the timeline."
+    }
+  ]
+}

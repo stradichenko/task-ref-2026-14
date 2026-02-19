@@ -1,0 +1,109 @@
+{
+  "title": "RACI Matrix: DM1 Prospective Data Collection Platform",
+  "subtitle": "Three-Month Project Plan -- Responsibility Assignment",
+  "legend": {
+    "R": { "label": "Responsible", "description": "Performs the work.", "color": "#1565C0" },
+    "A": { "label": "Accountable", "description": "Owns the outcome; one per activity.", "color": "#C62828" },
+    "C": { "label": "Consulted", "description": "Provides input before or during the work.", "color": "#F9A825" },
+    "I": { "label": "Informed", "description": "Kept up to date on progress or decisions.", "color": "#2E7D32" }
+  },
+  "roles": [
+    "CDM",
+    "Clinical\nInvestigators",
+    "Data\nEngineering",
+    "Development\n/ Technical",
+    "Legal\n/ DPO",
+    "Biostatistics",
+    "Study\nLeadership",
+    "DevOps /\nSysAdmin"
+  ],
+  "phases": [
+    {
+      "name": "Month 1: Foundation and Detailed Design",
+      "activities": [
+        {
+          "name": "Study data specification",
+          "raci": ["R,A", "C", "C", "I", "I", "C", "I", ""]
+        },
+        {
+          "name": "Instrument and schedule design",
+          "raci": ["R,A", "C", "I", "C", "I", "C", "I", ""]
+        },
+        {
+          "name": "Standards, terminologies, and coding",
+          "raci": ["R,A", "I", "C", "C", "", "C", "I", ""]
+        },
+        {
+          "name": "Minimal FHIR profile set",
+          "raci": ["R", "I", "C", "R,A", "", "", "I", ""]
+        },
+        {
+          "name": "Role and permission matrix",
+          "raci": ["R,A", "I", "C", "C", "C", "", "I", "C"]
+        },
+        {
+          "name": "Initial governance documentation",
+          "raci": ["R", "I", "I", "C", "R,A", "", "C", "I"]
+        }
+      ]
+    },
+    {
+      "name": "Month 2: Configuration, Implementation Support, and Governance",
+      "activities": [
+        {
+          "name": "Configuration of forms and schedules",
+          "raci": ["R,A", "C", "I", "C", "", "", "I", ""]
+        },
+        {
+          "name": "Review of application prototypes",
+          "raci": ["R", "C", "I", "R,A", "", "", "I", ""]
+        },
+        {
+          "name": "FHIR mapping specification and testing",
+          "raci": ["R", "I", "C", "R,A", "", "", "I", ""]
+        },
+        {
+          "name": "OMOP ETL design",
+          "raci": ["C", "I", "R,A", "C", "", "C", "I", ""]
+        },
+        {
+          "name": "Audit trail and data correction workflows",
+          "raci": ["R,A", "I", "I", "R", "C", "", "I", "C"]
+        },
+        {
+          "name": "DPIA and governance refinement",
+          "raci": ["R", "I", "I", "C", "R,A", "", "C", "I"]
+        }
+      ]
+    },
+    {
+      "name": "Month 3: Validation, User Testing, and Pilot Readiness",
+      "activities": [
+        {
+          "name": "Data management testing",
+          "raci": ["R,A", "I", "C", "C", "", "", "I", ""]
+        },
+        {
+          "name": "Audit trail and RBAC verification",
+          "raci": ["R,A", "", "I", "C", "C", "", "I", "C"]
+        },
+        {
+          "name": "End-to-end FHIR to OMOP validation",
+          "raci": ["R", "I", "R,A", "C", "", "C", "I", ""]
+        },
+        {
+          "name": "Usability sessions",
+          "raci": ["R,A", "C", "I", "C", "", "", "C", ""]
+        },
+        {
+          "name": "Finalisation of CDM and governance docs",
+          "raci": ["R,A", "I", "I", "I", "C", "I", "C", "I"]
+        },
+        {
+          "name": "Pilot preparation",
+          "raci": ["R", "C", "C", "C", "I", "I", "R,A", "C"]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,531 @@
+{
+  "title": "Role-Based Access Control Permission Matrix -- DM1 Data Collection Platform",
+  "roles": [
+    "Patient",
+    "Caregiver",
+    "Clinical Researcher",
+    "Data Manager",
+    "Data Engineer",
+    "Auditor",
+    "System Admin"
+  ],
+  "access_levels": {
+    "granted":   { "symbol": "G", "label": "Granted",               "color": "#2e7d32" },
+    "scoped":    { "symbol": "S", "label": "Scoped (site/own/proxy)","color": "#1565c0" },
+    "read_only": { "symbol": "R", "label": "Read-only",             "color": "#f9a825" },
+    "denied":    { "symbol": "-", "label": "Denied",                "color": "#bdbdbd" }
+  },
+  "categories": [
+    {
+      "name": "Data Capture",
+      "permissions": [
+        {
+          "name": "Create and submit own entries",
+          "access": {
+            "Patient": "granted",
+            "Caregiver": "scoped",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Correct own entries (within time window)",
+          "access": {
+            "Patient": "granted",
+            "Caregiver": "scoped",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "View own submissions and trends",
+          "access": {
+            "Patient": "granted",
+            "Caregiver": "scoped",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clinical Review",
+      "permissions": [
+        {
+          "name": "View participant data (own site)",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Annotate and classify entries",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Flag serious adverse events",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "read_only",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Monitor adherence dashboards",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Queries",
+      "permissions": [
+        {
+          "name": "Create data queries",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Respond to queries",
+          "access": {
+            "Patient": "granted",
+            "Caregiver": "scoped",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Manage queries study-wide",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Study Configuration",
+      "permissions": [
+        {
+          "name": "Configure forms and instruments",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Configure edit checks and validation",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Configure visit schedules",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Version and deploy configurations",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "read_only",
+            "System Admin": "denied"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data Quality and Locks",
+      "permissions": [
+        {
+          "name": "Run data quality reports",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Lock and unlock data at milestones",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "View data quality dashboards",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "read_only",
+            "System Admin": "denied"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data Pipelines and Exports",
+      "permissions": [
+        {
+          "name": "Configure ETL pipelines",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "granted",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Run ETL jobs",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "granted",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Configure and run data exports",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "granted",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Manage external system integrations",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "granted",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Edit clinical values in production",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        }
+      ]
+    },
+    {
+      "name": "OMOP and Research Access",
+      "permissions": [
+        {
+          "name": "Access OMOP research datasets",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "read_only",
+            "Data Engineer": "granted",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Run cohort queries (Atlas)",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "read_only",
+            "Data Engineer": "granted",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Configure OMOP access policies",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "granted",
+            "Data Engineer": "granted",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit and Compliance",
+      "permissions": [
+        {
+          "name": "View audit trail",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "scoped",
+            "Data Engineer": "denied",
+            "Auditor": "granted",
+            "System Admin": "read_only"
+          }
+        },
+        {
+          "name": "Export audit trail segments",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "granted",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "View system configuration snapshots",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "read_only",
+            "Data Engineer": "denied",
+            "Auditor": "granted",
+            "System Admin": "granted"
+          }
+        },
+        {
+          "name": "Filter and review security events",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "granted",
+            "System Admin": "granted"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consent Management",
+      "permissions": [
+        {
+          "name": "Provide or withdraw own consent",
+          "access": {
+            "Patient": "granted",
+            "Caregiver": "scoped",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "Manage consent forms and versions",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "read_only",
+            "System Admin": "denied"
+          }
+        },
+        {
+          "name": "View consent status per participant",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "scoped",
+            "Data Manager": "granted",
+            "Data Engineer": "denied",
+            "Auditor": "read_only",
+            "System Admin": "denied"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Identity and Access",
+      "permissions": [
+        {
+          "name": "Manage user accounts",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "granted"
+          }
+        },
+        {
+          "name": "Assign and revoke roles",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "granted"
+          }
+        },
+        {
+          "name": "View role assignments",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "read_only",
+            "Data Engineer": "denied",
+            "Auditor": "read_only",
+            "System Admin": "granted"
+          }
+        }
+      ]
+    },
+    {
+      "name": "System Administration",
+      "permissions": [
+        {
+          "name": "System and infrastructure configuration",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "denied",
+            "Auditor": "denied",
+            "System Admin": "granted"
+          }
+        },
+        {
+          "name": "View technical logs",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "granted",
+            "Auditor": "denied",
+            "System Admin": "granted"
+          }
+        },
+        {
+          "name": "Monitor system health and performance",
+          "access": {
+            "Patient": "denied",
+            "Caregiver": "denied",
+            "Clinical Researcher": "denied",
+            "Data Manager": "denied",
+            "Data Engineer": "granted",
+            "Auditor": "denied",
+            "System Admin": "granted"
+          }
+        }
+      ]
+    }
+  ]
+}

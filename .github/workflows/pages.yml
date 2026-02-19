@@ -1,0 +1,55 @@
+name: Render and Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'small_exploratory_analysis/exploratory_analysis.Rmd'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:          # allow manual trigger
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  render-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-24.11
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Render Rmd to HTML
+        run: |
+          nix develop --command bash -c '
+            Rscript -e "rmarkdown::render(
+              \"small_exploratory_analysis/exploratory_analysis.Rmd\",
+              output_format = \"rmarkdown::html_document\",
+              output_dir    = \"docs\"
+            )"
+          '
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

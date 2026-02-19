@@ -1,0 +1,37 @@
+# ── Generated diagram images (re-create with python <dir>/<script>.py) ──
+*.png
+
+# ── Python ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# ── Jupyter ─────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Virtual environments ────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── R ───────────────────────────────────────────────────────────────
+.R/
+.Rhistory
+.RData
+.Rproj.user/
+
+# ── Nix ─────────────────────────────────────────────────────────────
+flake.lock
+result
+
+# ── OS / editor artefacts ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+.vscode/
