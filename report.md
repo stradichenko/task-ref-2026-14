@@ -48,7 +48,7 @@ Clinical studies in rare diseases like DM1 typically assemble multi-modal data--
 
 The process begins with a thorough data inventory that documents every table's domain, purpose, primary and foreign keys, controlled vocabularies---International Classification of Diseases 10th Revision (ICD-10), Systematized Nomenclature of Medicine Clinical Terms (SNOMED CT), Anatomical Therapeutic Chemical Classification System (ATC), Logical Observation Identifiers Names and Codes (LOINC)---and expected cardinalities. A codebook then aligns these documented expectations with the reality found during profiling.
 
-The working environment centres on **PostgreSQL** as the relational hub, chosen because it enforces referential integrity, schema types, and Atomicity--Consistency--Isolation--Durability (ACID) transactions at the engine level---properties that are critical when linking clinical, genomic, and proteomic tables and that align naturally with both the FHIR facade and the OMOP CDM. Automated validation is implemented in **Python** (pandas, pandera, pytest), operational dashboards in **Grafana**, and domain-specific processing with tools such as bcftools, plink, and MSstats. On the OMOP instance, **Observational Health Data Sciences and Informatics (OHDSI)** tools (Achilles, DataQualityDashboard) provide an additional, standardised quality lens.
+The working environment centres on **PostgreSQL** as the relational hub, chosen because it enforces referential integrity, schema types, and Atomicity--Consistency--Isolation--Durability (ACID) transactions at the engine level---properties that are critical when linking clinical, genomic, and proteomic tables and that align naturally with both the FHIR facade and the OMOP CDM. Automated validation is implemented in **Python** (pandas, pandera, pytest), operational dashboards in **Grafana**, and domain-specific processing with tools such as bcftools (variant calling), plink (genotype quality control), and MSstats (proteomic quantification). The entire analytical toolchain---R, Python, pandoc, and LaTeX---is version-pinned through a **Nix** flake, so that any collaborator can reproduce the exact working environment from a single declarative configuration. On the OMOP instance, **Observational Health Data Sciences and Informatics (OHDSI)** tools (Achilles, DataQualityDashboard) provide an additional, standardised quality lens.
 
 ## Quality Dimensions and Checks
 
@@ -74,7 +74,7 @@ No value is ever overwritten silently. Every correction records original and new
 
 ## Architecture
 
-To ensure that research queries never slow down clinical data capture, the architecture maintains two separate PostgreSQL instances: one operational (data entry) and one analytical (OMOP CDM). Keycloak tokens carry role and site claims, so every query runs under governance-aware access control and is logged. All queries, cohort definitions, and report templates live in version control.
+To ensure that research queries never slow down clinical data capture, the architecture maintains two separate PostgreSQL instances: one operational (data entry) and one analytical (OMOP CDM). Keycloak, an open-source identity provider, issues tokens that carry role and site claims, so every query runs under governance-aware access control and is logged. All queries, cohort definitions, and report templates live in version control.
 
 ## Fast Queries
 
@@ -82,7 +82,7 @@ Performance is achieved through composite B-tree indexes on the OMOP tables (com
 
 ## Exploration and Correlation
 
-Because the patient entity serves as the link across all modalities, a library of parameterised SQL and Python templates has been prepared for the most common cross-modal queries. Researchers work in containerised JupyterLab or RStudio Server environments that connect through read-only, role-scoped credentials and come pre-loaded with analytical libraries (pandas, scikit-learn, lifelines, tidyverse, survival, DESeq2, MSstats). For investigators who prefer a graphical interface, OHDSI Atlas offers point-and-click cohort definition with JSON export for downstream scripts. Modular workflows cover survival analysis, mixed-effects models, clustering, and predictive classifiers, all with logged metadata for reproducibility.
+Because the patient entity serves as the link across all modalities, a library of parameterised SQL and Python templates has been prepared for the most common cross-modal queries. Researchers work in containerised JupyterLab or RStudio Server environments that connect through read-only, role-scoped credentials and come pre-loaded with analytical libraries (pandas, scikit-learn, lifelines, tidyverse, survival, DESeq2, MSstats). Environment definitions are managed as Nix flakes, so that every dependency version is locked and any analysis session can be reproduced exactly. For investigators who prefer a graphical interface, OHDSI Atlas offers point-and-click cohort definition with JSON export for downstream scripts. Modular workflows cover survival analysis, mixed-effects models, clustering, and predictive classifiers, all with logged metadata for reproducibility.
 
 ## Reports and Dashboards
 
@@ -92,7 +92,7 @@ The platform is designed for adaptability: schema evolution is handled through A
 
 ## Exploratory Statistical Study
 
-To illustrate the analytical capabilities in practice, an exploratory study was carried out using synthetic data from the Clinical Data Interchange Standards Consortium (CDISC). Starting from demographic summaries, it progresses through longitudinal vital-sign trajectories and change-from-baseline laboratory analyses to Kaplan--Meier survival curves. The full interactive report, complete with code and figures, is available at \weblink{https://stradichenko.github.io/task-ref-2026-14/exploratory_analysis.html}{Exploratory Analysis --- GitHub Pages}.
+To illustrate the analytical capabilities in practice, an exploratory study was carried out using synthetic data from the Clinical Data Interchange Standards Consortium (CDISC). Starting from demographic summaries, it progresses through longitudinal vital-sign trajectories and change-from-baseline laboratory analyses to Kaplan--Meier survival curves. The interactive report, including all code and figures, is available at \weblink{https://stradichenko.github.io/task-ref-2026-14/exploratory_analysis.html}{Exploratory Analysis --- GitHub Pages}.
 
 # Mobile App for Prospective Data Collection
 
@@ -149,7 +149,7 @@ The work is structured in four overlapping workstreams distributed across three 
 
 **Key milestones:** data specification complete (end of March); test environment fully configured (end of April); OMOP ETL validated (mid-May); pilot-ready (end of May).
 
-The responsibility distribution follows the \repolink{raci/raci_matrix.png}{RACI Responsibility Matrix}: the CDM role is Responsible and Accountable for most study design, configuration, testing, and documentation tasks. Development and Technical leads drive FHIR profile creation and app prototyping. Data Engineering owns the OMOP ETL pipeline. The Legal / Data Protection Officer (DPO) function is accountable for the DPIA. Study Leadership steers pilot preparation.
+The responsibility distribution follows the \repolink{raci/raci_matrix.png}{RACI Responsibility Matrix}: the CDM role is Responsible and Accountable for most study design, configuration, testing, and documentation tasks. Development and Technical leads drive FHIR profile creation and app prototyping. Data Engineering is responsible for the OMOP ETL pipeline. The Legal / Data Protection Officer (DPO) function is accountable for the DPIA. Study Leadership steers pilot preparation.
 
 Day-to-day coordination relies on weekly CDM--Development syncs, bi-weekly CDM--Data Engineering alignment meetings, and monthly governance reviews. The DM1-specific interface design---simplified screens, a proxy mode for caregivers, save-and-return, and configurable reminders---is refined continuously based on feedback. Interoperability targets extend beyond the immediate project to include European Reference Network for Neuromuscular Diseases (EURO-NMD) registries (Orphanet, Human Phenotype Ontology [HPO]), EHDS secondary-use pathways, and CDISC as a secondary mapping target for regulatory submissions.
 
