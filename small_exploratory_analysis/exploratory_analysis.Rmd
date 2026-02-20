@@ -80,6 +80,11 @@ if (is_html) {
   library(plotly)
   library(htmltools)
 }
+
+set.seed(42)
+
+# To render this document
+# Rscript -e 'rmarkdown::render("small_exploratory_analysis/exploratory_analysis.Rmd")'
 ```
 
 ```{r custom-css, echo=FALSE, results='asis'}
@@ -198,10 +203,9 @@ if (is_html) {
 }
 ```
 
-```{r seed}
-set.seed(42)
-```
-### Discovering available datasets
+---
+
+## 1. Data loading and preparation: Discovering available datasets
 
 
 The full catalogue of cached datasets can be enumerated programmatically. This
@@ -223,7 +227,7 @@ knitr::kable(data.frame(
 
 </details>
 
-The package ships with **20 cached datasets** covering domains such as adverse events (ADAE), ECG (ADEG), exposure (ADEX),
+From detailed inspection we determine that this package ships with **20 cached datasets** covering domains such as adverse events (ADAE), ECG (ADEG), exposure (ADEX),
 medical history (ADMH), pharmacokinetics (ADPC/ADPP), questionnaires (ADQS),
 tumour response (ADRS/ADTR), and more.
 
@@ -241,18 +245,6 @@ and longitudinal safety trackinG:
 | `cadlb`    | ADLB         | Lab biomarkers---hepatic (ALT) and inflammatory (CRP) surveillance relevant to DM1 therapies | ALT, CRP, IGA per visit        |
 | `cadaette` | ADAETTE      | Time-to-adverse-event---the most information-rich safety comparison across arms | Time, event/censor, by arm     |
 
-Datasets not used here (e.g. ADAE for individual AE listings, ADEG for ECG
-intervals, ADQS for patient-reported outcomes) would become relevant in a
-full production analysis; the proposed system is designed to accommodate all
-of them.
-
----
-
-## 1. Data loading and preparation
-
-From the 20 available cached CDISC datasets we load the four selected above and
-inspect their dimensions.
-
 ```{r load-data}
 data("cadsl");    adsl    <- cadsl
 data("cadvs");    advs    <- cadvs
@@ -265,6 +257,13 @@ tibble(
   Columns  = c(ncol(adsl), ncol(advs), ncol(adlb), ncol(adaette))
 ) %>% knitr::kable(align = "lrr")
 ```
+
+Datasets not used here (e.g. ADAE for individual AE listings, ADEG for ECG
+intervals, ADQS for patient-reported outcomes) would become relevant in a
+full production analysis; the proposed system is designed to accommodate all
+of them.
+
+---
 
 ### Variable inventory
 
@@ -318,8 +317,8 @@ The inventory helps us **discriminate which variables to use for each analysis**
 
 </details>
 
-The cached data ships with **400 subjects**. Our DM1 study has 200, so we
-subsample to match the intended scale. In a production system this step would
+The cached data ships with **400 subjects**. For the purpose of the intent, we are 
+subsampling to match the intended scale. In a production system this step would
 not exist---the warehouse query would simply return the real cohort.
 
 ```{r subsample}
@@ -831,7 +830,7 @@ biological correlates of adverse event risk.
 
 ---
 
-## Summary
+## Notes
 
 The four analyses above trace a deliberate progression:
 
@@ -853,16 +852,3 @@ In the proposed dynamic analysis system, each of these would be:
 - **Version-controlled and reproducible**, with every result tied to a code
   version, data-cut date, and parameter set.
 
----
-
-## Reproducibility
-
-This analysis runs inside the project's Nix development shell. To reproduce:
-
-```bash
-# Enter the environment (all dependencies resolved automatically)
-nix develop
-
-# Render this document
-Rscript -e 'rmarkdown::render("small_exploratory_analysis/exploratory_analysis.Rmd")'
-```
