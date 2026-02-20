@@ -51,6 +51,15 @@
             # -- Bash --
             pkgs.bash
 
+            # -- Pandoc and LaTeX for rendering the report to PDF --
+            pkgs.pandoc
+            (pkgs.texliveSmall.withPackages (ps: with ps; [
+              collection-latexrecommended
+              collection-fontsrecommended
+              collection-latexextra
+              collection-xetex
+            ]))
+
             # -- Utilities needed for R package compilation / GitHub installs --
             pkgs.git
             pkgs.curl
@@ -90,8 +99,10 @@
             echo "  R          : $(R --version | head -1)"
             echo "  Python     : $(python3 --version)"
             echo "  Bash       : $(bash --version | head -1)"
+            echo "  Pandoc     : $(pandoc --version | head -1)"
             echo "  RStudio    : run 'rstudio' to launch"
             echo "  R packages : tidyverse, remotes, devtools, random.cdisc.data"
+            echo "  Report     : pandoc report.md -o report.pdf --pdf-engine=xelatex"
             echo ""
           '';
         };

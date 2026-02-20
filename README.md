@@ -1,8 +1,9 @@
 # Task Ref. 2026-14
 
 This project comes with a **fully reproducible environment** — all the tools you
-need (R, RStudio, Python, tidyverse, etc.) are defined in a single file and will
-be installed automatically. You don't need to install them yourself.
+need (R, RStudio, Python, tidyverse, Pandoc, LaTeX, etc.) are defined in a
+single file and will be installed automatically. You don't need to install them
+yourself.
 
 ---
 
@@ -17,10 +18,48 @@ Once the environment is running you will have:
 | **random.cdisc.data** | Auto-installed on first run |
 | **Python** | 3.11 with pip and virtualenv |
 | **Bash** | Available as default shell |
+| **Pandoc + LaTeX** | For rendering the report to PDF |
 
 ---
 
-## Analyses
+## Documents
+
+### Three-Month Action Plan (PDF Report)
+
+The main deliverable is a comprehensive action plan for the Clinical Data
+Manager position, rendered from Markdown to PDF via Pandoc and LaTeX.
+
+| Artefact | Location |
+|:---------|:---------|
+| **Source** | [report.md](report.md) |
+| **Rendered PDF** | `report.pdf` (generated locally — see instructions below) |
+
+#### How to render the report
+
+Inside the Nix environment:
+
+```sh
+nix develop
+pandoc report.md \
+  -o report.pdf \
+  --pdf-engine=xelatex \
+  --toc \
+  --number-sections \
+  -V geometry:margin=2.5cm \
+  -V fontsize=11pt \
+  -V documentclass=article
+```
+
+Alternatively, if you have Pandoc and a LaTeX distribution installed:
+
+```sh
+pandoc report.md -o report.pdf --pdf-engine=xelatex
+```
+
+The report references images from `rbac/`, `raci/`, `gantt/`, `risk_matrix/`,
+and `data_flow/` — make sure to run the command from the project root.
+
+---
 
 ### Exploratory Analysis of Clinical Variables Over Time
 
