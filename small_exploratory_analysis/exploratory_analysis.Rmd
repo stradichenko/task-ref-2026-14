@@ -1,5 +1,5 @@
 ---
-title: "Exploratory Analysis of Clinical Variables Over Time"
+title: "Exploratory Analysis of Clinical Variables"
 subtitle: "A proof-of-concept for the DM1 Dynamic Analysis System"
 author: "Task Ref. 2026-14"
 date: "`r Sys.Date()`"
@@ -45,71 +45,27 @@ cataracts, and cognitive impairment. A well-designed analytical system must
 therefore support exploration across **multiple clinical domains** and detect
 subtle longitudinal changes that unfold over months to years.
 
-### Data source
+### Data source & Environment setup
 
 We use the publicly available
 [`random.cdisc.data`](https://insightsengineering.github.io/random.cdisc.data/)
 package from the [pharmaverse](https://pharmaverse.org/) ecosystem, which
 generates synthetic CDISC ADaM datasets that mirror the structure of a real
-multi-centre clinical trial. The package ships with **20 cached datasets**
-covering domains such as adverse events (ADAE), ECG (ADEG), exposure (ADEX),
-medical history (ADMH), pharmacokinetics (ADPC/ADPP), questionnaires (ADQS),
-tumour response (ADRS/ADTR), and more.
+multi-centre clinical trial. 
 
-For this exploratory pass we select **four** that map naturally to the DM1
-clinical context---as outlined in the consensus-based care recommendations for
-adults with DM1
-([Ashizawa *et al.*, 2018](https://doi.org/10.1212/CPJ.0000000000000531)),
-which emphasise regular cardiac monitoring, hepatic and endocrine surveillance,
-and longitudinal safety tracking---and that let us build a clear progression in
-analytical complexity:
-
-| Dataset    | CDISC domain | Why selected for DM1                                                  | Key variables                  |
-|:-----------|:-------------|:----------------------------------------------------------------------|:-------------------------------|
-| `cadsl`    | ADSL         | Demographics & baseline---needed for any analysis and to check arm balance | AGE, SEX, RACE, ARM, BMRKR1/2 |
-| `cadvs`    | ADVS         | Vital signs over time---cardiovascular monitoring is critical in DM1 (cardiac conduction defects) | SYSBP, DIABP, PULSE per visit  |
-| `cadlb`    | ADLB         | Lab biomarkers---hepatic (ALT) and inflammatory (CRP) surveillance relevant to DM1 therapies | ALT, CRP, IGA per visit        |
-| `cadaette` | ADAETTE      | Time-to-adverse-event---the most information-rich safety comparison across arms | Time, event/censor, by arm     |
-
-Datasets not used here (e.g. ADAE for individual AE listings, ADEG for ECG
-intervals, ADQS for patient-reported outcomes) would become relevant in a
-full production analysis; the proposed system is designed to accommodate all
-of them.
-
-### Discovering available datasets
-
-The full catalogue of cached datasets can be enumerated programmatically. This
-is useful when onboarding new team members or scripting automated pipelines
-that must know what data is available:
-
-<details>
-<summary><strong>Click to expand: all 20 cached datasets</strong></summary>
-
-```{r available-datasets}
-# List every cached dataset shipped with random.cdisc.data
-available <- data(package = "random.cdisc.data")$results
-knitr::kable(data.frame(
-  Dataset     = available[, "Item"],
-  Description = available[, "Title"],
-  stringsAsFactors = FALSE
-))
-```
-
-</details>
-
----
-
-## Environment setup
-
-All dependencies are declared in the project's Nix flake, so inside
+All dependencies are declared in the project's Nix flake, so by using
 `nix develop` every package below is available without manual installation.
 
 ```{r load-packages}
-# Install helper packages if not already present
-for (pkg in c("gridExtra", "broom", "scales", "plotly", "htmltools", "webshot2")) {
-  if (!requireNamespace(pkg, quietly = TRUE))
-    install.packages(pkg, repos = "https://cloud.r-project.org", quiet = TRUE)
-}
+## All packages are provided by the Nix flake — no manual installation needed.
+## If you run this report outside `nix develop`, uncomment the block below:
+#
+# install.packages(
+#   c("tidyverse", "survival", "random.cdisc.data",
+#     "gridExtra", "broom", "scales",
+#     "plotly", "htmltools", "webshot2"),
+#   repos = "https://cloud.r-project.org"
+# )
 
 library(tidyverse)
 library(survival)
@@ -245,10 +201,54 @@ if (is_html) {
 ```{r seed}
 set.seed(42)
 ```
+### Discovering available datasets
+
+
+The full catalogue of cached datasets can be enumerated programmatically. This
+is useful when onboarding new team members or scripting automated pipelines
+that must know what data is available:
+
+<details>
+<summary><strong>Click to expand: all cached datasets</strong></summary>
+
+```{r available-datasets}
+# List every cached dataset shipped with random.cdisc.data
+available <- data(package = "random.cdisc.data")$results
+knitr::kable(data.frame(
+  Dataset     = available[, "Item"],
+  Description = available[, "Title"],
+  stringsAsFactors = FALSE
+))
+```
+
+</details>
+
+The package ships with **20 cached datasets** covering domains such as adverse events (ADAE), ECG (ADEG), exposure (ADEX),
+medical history (ADMH), pharmacokinetics (ADPC/ADPP), questionnaires (ADQS),
+tumour response (ADRS/ADTR), and more.
+
+For this exploratory pass we select **four** that map naturally to the DM1
+clinical context---as outlined in the consensus-based care recommendations for
+adults with DM1
+([Ashizawa *et al.*, 2018](https://doi.org/10.1212/CPJ.0000000000000531)),
+which emphasise regular cardiac monitoring, hepatic and endocrine surveillance,
+and longitudinal safety trackinG:
+
+| Dataset    | CDISC domain | Why selected for DM1                                                  | Key variables                  |
+|:-----------|:-------------|:----------------------------------------------------------------------|:-------------------------------|
+| `cadsl`    | ADSL         | Demographics & baseline---needed for any analysis and to check arm balance | AGE, SEX, RACE, ARM, BMRKR1/2 |
+| `cadvs`    | ADVS         | Vital signs over time---cardiovascular monitoring is critical in DM1 (cardiac conduction defects) | SYSBP, DIABP, PULSE per visit  |
+| `cadlb`    | ADLB         | Lab biomarkers---hepatic (ALT) and inflammatory (CRP) surveillance relevant to DM1 therapies | ALT, CRP, IGA per visit        |
+| `cadaette` | ADAETTE      | Time-to-adverse-event---the most information-rich safety comparison across arms | Time, event/censor, by arm     |
+
+Datasets not used here (e.g. ADAE for individual AE listings, ADEG for ECG
+intervals, ADQS for patient-reported outcomes) would become relevant in a
+full production analysis; the proposed system is designed to accommodate all
+of them.
 
 ---
 
-## 1 &mdash; Data loading and preparation
+## 1. Data loading and preparation
 
 From the 20 available cached CDISC datasets we load the four selected above and
 inspect their dimensions.
@@ -340,7 +340,7 @@ treatment arms** (`r paste(levels(adsl$ARM), collapse = ", ")`).
 
 ---
 
-## 2 &mdash; Demographic overview by treatment arm
+## 2. Demographic overview by treatment arm
 
 The first step in any clinical analysis is understanding *who* is in the study.
 In a multi-centre trial we need to verify that treatment arms are balanced with
@@ -397,14 +397,14 @@ if (is_html) {
 
 <p align="center"><em><strong>Fig. 1.</strong> Demographic overview by treatment arm. Left: patient counts by arm and sex. Right: overlaid age density curves by treatment arm.</em></p>
 
-**What we see:** The three arms are roughly balanced in size and sex ratio. Age
+The three arms are roughly balanced in size and sex ratio. Age
 distributions overlap substantially, suggesting randomisation achieved its goal.
 A formal test (e.g. ANOVA on age, chi-square on sex) could confirm this, but for
 an exploratory pass the visual check is sufficient.
 
 ---
 
-## 3 &mdash; Vital signs trajectories over time
+## 3. Vital signs trajectories over time
 
 DM1 is a multi-systemic disease with well-documented **cardiovascular
 involvement**---cardiac conduction defects, arrhythmias, and in some cohorts
@@ -541,7 +541,7 @@ if (is_html) {
 
 <p align="center"><em><strong>Fig. 2.</strong> Systolic blood pressure trajectories over scheduled study visits. Individual patient traces (grey) are overlaid with group mean ± 95 % CI by treatment arm.</em></p>
 
-**What we see:** Mean SBP stays relatively stable across visits in all three
+Mean SBP stays relatively stable across visits in all three
 arms, with wide individual variability (a realistic pattern for a heterogeneous
 disease). In a real DM1 dataset we would also overlay **cardiac conduction
 metrics** (PR interval, QTc) from the ECG domain---cross-modal exploration that
@@ -549,7 +549,7 @@ the proposed system is designed to support.
 
 ---
 
-## 4 &mdash; Laboratory biomarker change from baseline
+## 4. Laboratory biomarker change from baseline
 
 In DM1, hepatic and inflammatory markers deserve close surveillance:
 
@@ -636,7 +636,7 @@ if (is_html) {
 
 <p align="center"><em><strong>Fig. 3.</strong> Change from baseline in ALT and CRP across study visits by treatment arm. The dashed line marks zero change; boxes show the inter-quartile range with whiskers extending to 1.5 × IQR.</em></p>
 
-**What we see:** Both ALT and CRP change distributions remain centred around
+Both ALT and CRP change distributions remain centred around
 zero with no obvious arm-level divergence---a reassuring safety signal.
 The inter-quartile ranges widen slightly at later visits, consistent with
 increasing variability as follow-up time grows and some patients are lost. In a
@@ -647,7 +647,7 @@ designed to enable.
 
 ---
 
-## 5 &mdash; Kaplan-Meier: time to first adverse event
+## 5. Kaplan-Meier: time to first adverse event
 
 Time-to-event analysis is the most information-rich way to compare safety
 profiles across treatment arms. The Kaplan-Meier estimator gives non-parametric
@@ -821,7 +821,7 @@ if (is_html) {
 
 <p align="center"><em><strong>Fig. 4.</strong> Kaplan–Meier curves for time to first adverse event by treatment arm, with 95 % confidence bands and censoring tick marks. The log-rank test p-value is annotated.</em></p>
 
-**What we see:** The Kaplan-Meier curves separate modestly between arms, with a
+The Kaplan-Meier curves separate modestly between arms, with a
 log-rank p-value of **`r sprintf("%.4f", lr_pval)`**---nominally significant at
 the 0.05 level. In a real DM1 study this would warrant further investigation
 with a **Cox proportional-hazards model** adjusting for baseline covariates
@@ -866,14 +866,3 @@ nix develop
 # Render this document
 Rscript -e 'rmarkdown::render("small_exploratory_analysis/exploratory_analysis.Rmd")'
 ```
-
-| Package              | Purpose                                 |
-|:---------------------|:----------------------------------------|
-| `tidyverse`          | Data wrangling and ggplot2 plotting     |
-| `survival`           | Kaplan-Meier estimation, log-rank test  |
-| `random.cdisc.data`  | Synthetic CDISC ADaM datasets           |
-| `plotly`             | Interactive HTML visualisations         |
-| `gridExtra`          | Multi-panel plot arrangement (fallback) |
-| `broom`              | Tidy survival model output              |
-| `scales`             | Axis formatting                         |
-| `rmarkdown` / `knitr`| Document rendering                      |
