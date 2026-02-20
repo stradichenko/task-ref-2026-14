@@ -38,15 +38,6 @@ clinical, genomic, and proteomic data from **200 patients with Myotonic
 Dystrophy Type 1 (DM1)**, collected across **25 hospitals** and entered by
 **13 different personnel**.
 
-Before building complex pipelines, any competent data team starts the same way:
-**look at the data**. This document walks through a short sequence of
-exploratory analyses that progress from simple descriptive plots to
-time-to-event modelling---the kind of work the system's analytical layer
-(interactive notebooks, parameterised modules, materialised views) would enable
-from day one.
-
-### Why these analyses matter for DM1
-
 Myotonic Dystrophy Type 1 is the most common adult-onset muscular dystrophy.
 It is a **multi-systemic** disorder: beyond progressive muscle weakness,
 patients experience cardiac conduction defects, endocrine abnormalities,
@@ -60,14 +51,51 @@ We use the publicly available
 [`random.cdisc.data`](https://insightsengineering.github.io/random.cdisc.data/)
 package from the [pharmaverse](https://pharmaverse.org/) ecosystem, which
 generates synthetic CDISC ADaM datasets that mirror the structure of a real
-multi-centre clinical trial.
+multi-centre clinical trial. The package ships with **20 cached datasets**
+covering domains such as adverse events (ADAE), ECG (ADEG), exposure (ADEX),
+medical history (ADMH), pharmacokinetics (ADPC/ADPP), questionnaires (ADQS),
+tumour response (ADRS/ADTR), and more.
 
-| Dataset    | CDISC domain | Description                     | Key variables                  |
-|:-----------|:-------------|:--------------------------------|:-------------------------------|
-| `cadsl`    | ADSL         | Subject-Level Analysis          | AGE, SEX, RACE, ARM, BMRKR1/2 |
-| `cadvs`    | ADVS         | Vital Signs Analysis            | SYSBP, DIABP, PULSE per visit  |
-| `cadlb`    | ADLB         | Laboratory Analysis             | ALT, CRP, IGA per visit        |
-| `cadaette` | ADAETTE      | Time-to-Adverse-Event Analysis  | Time, event/censor, by arm     |
+For this exploratory pass we select **four** that map naturally to the DM1
+clinical context---as outlined in the consensus-based care recommendations for
+adults with DM1
+([Ashizawa *et al.*, 2018](https://doi.org/10.1212/CPJ.0000000000000531)),
+which emphasise regular cardiac monitoring, hepatic and endocrine surveillance,
+and longitudinal safety tracking---and that let us build a clear progression in
+analytical complexity:
+
+| Dataset    | CDISC domain | Why selected for DM1                                                  | Key variables                  |
+|:-----------|:-------------|:----------------------------------------------------------------------|:-------------------------------|
+| `cadsl`    | ADSL         | Demographics & baseline---needed for any analysis and to check arm balance | AGE, SEX, RACE, ARM, BMRKR1/2 |
+| `cadvs`    | ADVS         | Vital signs over time---cardiovascular monitoring is critical in DM1 (cardiac conduction defects) | SYSBP, DIABP, PULSE per visit  |
+| `cadlb`    | ADLB         | Lab biomarkers---hepatic (ALT) and inflammatory (CRP) surveillance relevant to DM1 therapies | ALT, CRP, IGA per visit        |
+| `cadaette` | ADAETTE      | Time-to-adverse-event---the most information-rich safety comparison across arms | Time, event/censor, by arm     |
+
+Datasets not used here (e.g. ADAE for individual AE listings, ADEG for ECG
+intervals, ADQS for patient-reported outcomes) would become relevant in a
+full production analysis; the proposed system is designed to accommodate all
+of them.
+
+### Discovering available datasets
+
+The full catalogue of cached datasets can be enumerated programmatically. This
+is useful when onboarding new team members or scripting automated pipelines
+that must know what data is available:
+
+<details>
+<summary><strong>Click to expand: all 20 cached datasets</strong></summary>
+
+```{r available-datasets}
+# List every cached dataset shipped with random.cdisc.data
+available <- data(package = "random.cdisc.data")$results
+knitr::kable(data.frame(
+  Dataset     = available[, "Item"],
+  Description = available[, "Title"],
+  stringsAsFactors = FALSE
+))
+```
+
+</details>
 
 ---
 
@@ -222,7 +250,8 @@ set.seed(42)
 
 ## 1 &mdash; Data loading and preparation
 
-We load four cached CDISC datasets and immediately inspect their dimensions.
+From the 20 available cached CDISC datasets we load the four selected above and
+inspect their dimensions.
 
 ```{r load-data}
 data("cadsl");    adsl    <- cadsl
@@ -236,6 +265,58 @@ tibble(
   Columns  = c(ncol(adsl), ncol(advs), ncol(adlb), ncol(adaette))
 ) %>% knitr::kable(align = "lrr")
 ```
+
+### Variable inventory
+
+Before any modelling we need to understand **what each dataset contains** and
+which columns are candidates for specific analytical tasks. The table below
+profiles every variable: its R class, the percentage of non-missing values, the
+number of distinct values, and a sample entry. This is the kind of metadata
+catalogue the proposed system would expose through an automated data-dictionary
+endpoint.
+
+<details>
+<summary><strong>Click to expand: variable inventory for all 4 datasets</strong></summary>
+
+```{r variable-inventory}
+profile_vars <- function(df, label) {
+  tibble(
+    Dataset  = label,
+    Variable = names(df),
+    Class    = sapply(df, function(x) paste(class(x), collapse = "/")),
+    `Non-NA %` = sapply(df, function(x) sprintf("%.0f%%", 100 * mean(!is.na(x)))),
+    `Distinct` = sapply(df, n_distinct),
+    Example  = sapply(df, function(x) {
+      v <- na.omit(x)
+      if (length(v) == 0) return("NA")
+      as.character(v[1])
+    })
+  )
+}
+
+bind_rows(
+  profile_vars(adsl,    "ADSL"),
+  profile_vars(advs,    "ADVS"),
+  profile_vars(adlb,    "ADLB"),
+  profile_vars(adaette, "ADAETTE")
+) %>%
+  knitr::kable()
+```
+
+The inventory helps us **discriminate which variables to use for each analysis**:
+
+- **Categorical** variables with few distinct values (e.g. `ARM`, `SEX`, `RACE`,
+  `PARAMCD`) &rarr; grouping / stratification factors.
+- **Continuous numeric** columns (e.g. `AVAL`, `CHG`, `BASE`, `AGE`, `BMRKR1`)
+  &rarr; outcome or covariate in regressions, boxplots, trajectories.
+- **Date / time** columns (e.g. `TRTSDTM`, `TRTEDTM`, `ADTM`) &rarr;
+  time-on-treatment, duration calculations.
+- **Censoring indicators** (`CNSR`, `EVNTDESC`) &rarr; time-to-event (survival)
+  modelling.
+- **Visit identifiers** (`AVISIT`, `AVISITN`) &rarr; longitudinal panel
+  structure, repeated-measures models.
+
+</details>
 
 The cached data ships with **400 subjects**. Our DM1 study has 200, so we
 subsample to match the intended scale. In a production system this step would
@@ -260,8 +341,6 @@ treatment arms** (`r paste(levels(adsl$ARM), collapse = ", ")`).
 ---
 
 ## 2 &mdash; Demographic overview by treatment arm
-
-> **Complexity level:** descriptive / univariate.
 
 The first step in any clinical analysis is understanding *who* is in the study.
 In a multi-centre trial we need to verify that treatment arms are balanced with
@@ -289,7 +368,7 @@ p1_left <- ggplot(demo_summary, aes(x = ARM, y = n_patients, fill = SEX)) +
   labs(x = NULL, y = "Number of patients", fill = "Sex") +
   theme_minimal(base_size = 11) +
   theme(axis.text.x = element_text(angle = 25, hjust = 1),
-        legend.position = "top")
+        legend.position = "bottom")
 
 # Age density by arm
 p1_right <- ggplot(adsl, aes(x = AGE, fill = ARM, colour = ARM)) +
@@ -297,19 +376,18 @@ p1_right <- ggplot(adsl, aes(x = AGE, fill = ARM, colour = ARM)) +
   labs(x = "Age (years)", y = "Density",
        fill = "Treatment arm", colour = "Treatment arm") +
   theme_minimal(base_size = 11) +
-  theme(legend.position = "top")
+  theme(legend.position = "bottom")
 
 if (is_html) {
   subplot(
-    ggplotly(p1_left,  tooltip = c("x", "y", "fill")) %>%
-      layout(legend = list(orientation = "h", y = 1.12)),
-    ggplotly(p1_right, tooltip = c("x", "y", "fill")) %>%
-      layout(legend = list(orientation = "h", y = 1.12)),
+    ggplotly(p1_left,  tooltip = c("x", "y", "fill")),
+    ggplotly(p1_right, tooltip = c("x", "y", "fill")),
     nrows = 1, shareY = FALSE, titleX = TRUE, titleY = TRUE, margin = 0.06
   ) %>%
     layout(
       title = list(text = "Demographic Overview by Treatment Arm", x = 0.5),
-      margin = list(t = 80)
+      legend = list(orientation = "h", y = -0.15, x = 0.5, xanchor = "center"),
+      margin = list(t = 80, b = 80)
     ) %>%
     add_plotly_config()
 } else {
@@ -327,8 +405,6 @@ an exploratory pass the visual check is sufficient.
 ---
 
 ## 3 &mdash; Vital signs trajectories over time
-
-> **Complexity level:** longitudinal / time-related.
 
 DM1 is a multi-systemic disease with well-documented **cardiovascular
 involvement**---cardiac conduction defects, arrhythmias, and in some cohorts
@@ -475,8 +551,6 @@ the proposed system is designed to support.
 
 ## 4 &mdash; Laboratory biomarker change from baseline
 
-> **Complexity level:** longitudinal / safety monitoring.
-
 In DM1, hepatic and inflammatory markers deserve close surveillance:
 
 - **ALT (Alanine Aminotransferase):** a standard liver-function marker. Many
@@ -574,8 +648,6 @@ designed to enable.
 ---
 
 ## 5 &mdash; Kaplan-Meier: time to first adverse event
-
-> **Complexity level:** time-to-event / inferential.
 
 Time-to-event analysis is the most information-rich way to compare safety
 profiles across treatment arms. The Kaplan-Meier estimator gives non-parametric

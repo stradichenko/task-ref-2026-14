@@ -1,6 +1,3 @@
-# ── Generated diagram images (re-create with python <dir>/<script>.py) ──
-*.png
-
 # ── Python ──────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
