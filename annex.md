@@ -62,14 +62,14 @@ header-includes:
 \begin{table}[H]
 \centering
 \includegraphics[width=\textwidth]{rbac/rbac_matrix.png}
-\caption{Role-Based Access Control (RBAC) Permission Matrix. Seven roles (System Administrator, Data Manager, Investigator, Site Coordinator, Data Engineer, Analyst/Researcher, External Auditor) mapped against 37 permissions across 11 categories.}
+\caption{Role-Based Access Control (RBAC) Permission Matrix. Seven roles (Patient, Caregiver, Clinical Researcher, Data Manager, Data Engineer, Auditor, System Admin) mapped against 38 permissions across 11 categories.}
 \label{tab:rbac}
 \end{table}
 
 \begin{table}[H]
 \centering
 \includegraphics[width=\textwidth]{raci/raci_matrix.png}
-\caption{Responsible--Accountable--Consulted--Informed (RACI) Responsibility Matrix. Task allocation across Clinical Data Manager, Development/Technical, Data Engineering, Legal/DPO, and Study Leadership roles for all major deliverables.}
+\caption{Responsible--Accountable--Consulted--Informed (RACI) Responsibility Matrix. Task allocation across eight roles---Clinical Data Manager, Clinical Investigators, Data Engineering, Development/Technical, Legal/DPO, Biostatistics, Study Leadership, and DevOps/SysAdmin---for all major deliverables.}
 \label{tab:raci}
 \end{table}
 

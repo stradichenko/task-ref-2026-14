@@ -20,7 +20,7 @@ The product of the two scores determines the severity band displayed on the heat
 
 #### R1: Fast Healthcare Interoperability Resources (FHIR) and Observational Medical Outcomes Partnership Common Data Model (OMOP CDM) Mapping Complexity
 
-Likelihood: 3 (High). Impact: 4 (Major). Severity: High.
+Likelihood: 3 (High). Impact: 3 (Major). Severity: High.
 
 The mapping chain runs from study-specific variables through FHIR profiles into the operational data store, and then through an extract-transform-load (ETL) pipeline into OMOP CDM tables. Each step involves terminology alignment (Systematized Nomenclature of Medicine Clinical Terms (SNOMED CT), Logical Observation Identifiers Names and Codes (LOINC), Anatomical Therapeutic Chemical (ATC), project-defined concepts), structural transformation, and validation. In comparable projects, underestimating this complexity has been the single most common cause of delayed research-ready datasets.
 
@@ -30,7 +30,7 @@ Mitigation. Prioritise a minimal, high-value subset of variables for complete en
 
 #### R2: Suboptimal Usability for Myotonic Dystrophy Type 1 (DM1) Patients and Caregivers
 
-Likelihood: 2 (Medium). Impact: 4 (Major). Severity: High.
+Likelihood: 2 (Medium). Impact: 3 (Major). Severity: High.
 
 DM1 presents specific challenges for digital data collection. Patients may experience myotonia affecting fine motor control, fatigue limiting sustained interaction, cognitive involvement reducing tolerance for complex navigation, and variable day-to-day capacity. A mobile application that does not account for these factors risks low adherence, incomplete data, or systematic quality issues that compromise downstream analysis.
 
@@ -40,7 +40,7 @@ Mitigation. Conduct early and repeated usability sessions with DM1 patients or c
 
 #### R3: Slow Governance and Legal Reviews
 
-Likelihood: 3 (High). Impact: 3 (Moderate). Severity: Medium-High.
+Likelihood: 3 (High). Impact: 2 (Moderate). Severity: Medium-High.
 
 The platform processes personal health data under the General Data Protection Regulation (GDPR) and is designed to align with emerging European Health Data Space (EHDS) requirements. Governance deliverables include a data protection impact assessment (DPIA), consent language, data access procedures, retention policies, and ethics committee submissions. These artefacts depend on input from legal counsel, data protection officers, and institutional review processes, all of which operate on timelines that the project team cannot fully control.
 
@@ -50,7 +50,7 @@ Mitigation. Start governance work in Month 1, in parallel with technical design.
 
 #### R4: Technical Integration of Free and Open Source Software (FOSS) Components
 
-Likelihood: 2 (Medium). Impact: 3 (Moderate). Severity: Medium.
+Likelihood: 2 (Medium). Impact: 2 (Moderate). Severity: Medium.
 
 The platform assembles several independent open source components: Keycloak for identity and access management, PostgreSQL for operational and research data stores, a FHIR facade built on FastAPI or NestJS, OHDSI tools (Atlas, WebAPI) for the OMOP environment, Apache Airflow or Prefect for pipeline orchestration, and Prometheus, Grafana, and Loki or OpenSearch for observability. Each component is mature individually, but their integration introduces configuration surface area, version compatibility considerations, and operational complexity.
 
@@ -62,10 +62,10 @@ Mitigation. Establish an integration environment that closely resembles the prod
 
 | Risk | Likelihood | Impact | Severity | Primary mitigation |
 |------|-----------|--------|----------|-------------------|
-| R1: FHIR/OMOP mapping complexity | High (3) | Major (4) | High | Prioritise minimal variable subset for end-to-end mapping; phase broader coverage. |
-| R2: Suboptimal DM1 usability | Medium (2) | Major (4) | High | Early and repeated usability testing; fatigue-aware and accessible design. |
-| R3: Slow governance/legal reviews | High (3) | Moderate (3) | Medium-High | Start governance in Month 1; named reviewers with agreed turnaround windows. |
-| R4: FOSS integration complexity | Medium (2) | Moderate (3) | Medium | Integration environment from week one; incremental end-to-end testing. |
+| R1: FHIR/OMOP mapping complexity | High (3) | Major (3) | High | Prioritise minimal variable subset for end-to-end mapping; phase broader coverage. |
+| R2: Suboptimal DM1 usability | Medium (2) | Major (3) | High | Early and repeated usability testing; fatigue-aware and accessible design. |
+| R3: Slow governance/legal reviews | High (3) | Moderate (2) | Medium-High | Start governance in Month 1; named reviewers with agreed turnaround windows. |
+| R4: FOSS integration complexity | Medium (2) | Moderate (2) | Medium | Integration environment from week one; incremental end-to-end testing. |
 
 The overall risk profile is manageable within the three-month timeline, provided that mitigations are enacted from the start and that the project team maintains the cross-workstream coordination described in the planning document. The risk matrix should be revisited at each monthly milestone to reassess likelihood and impact in light of progress and emerging information.
 

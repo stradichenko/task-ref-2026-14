@@ -92,13 +92,13 @@ The platform is designed for adaptability: schema evolution is handled through A
 
 ## Exploratory Statistical Study
 
-To illustrate the analytical capabilities in practice, an exploratory study was carried out using synthetic data from the Clinical Data Interchange Standards Consortium (CDISC). Starting from demographic summaries, it progresses through longitudinal vital-sign trajectories and change-from-baseline laboratory analyses to Kaplan--Meier survival curves. The interactive report, including all code and figures, is available at \weblink{https://stradichenko.github.io/task-ref-2026-14/exploratory_analysis.html}{Exploratory Analysis --- GitHub Pages}.
+To illustrate the analytical capabilities in practice, an exploratory study was carried out using synthetic data from the Clinical Data Interchange Standards Consortium (CDISC). Starting from demographic summaries, it progresses through longitudinal vital-sign trajectories and change-from-baseline laboratory analyses to Kaplan--Meier survival curves. The interactive report, including all code and figures, is available at \weblink{https://stradichenko.github.io/task-ref-2026-14/exploratory_analysis.html}{Exploratory Analysis - GitHub Pages}.
 
 # Mobile App for Prospective Data Collection
 
 ## Architecture and Technologies
 
-The system is organised in seven clearly separated layers: (1) a patient-facing mobile app together with a clinician portal; (2) API services built on FastAPI or NestJS; (3) Identity and Access Management (IAM) through Keycloak, providing OpenID Connect, Role-Based Access Control (RBAC), and Multi-Factor Authentication (MFA); (4) an operational PostgreSQL database that stores only pseudonymised data; (5) de-identification pipelines orchestrated by Airflow or Prefect; (6) the OMOP CDM research warehouse with OHDSI Atlas; and (7) an observability stack comprising Prometheus, Grafana, Loki, and an append-only audit log. Everything is containerised with Docker or Podman, vendor-independent, and fully open-source. A visual overview of how data moves through these layers is provided in the \repolink{data_flow/data_flow_diagram.png}{Data Flow Diagram}.
+The system is organised in seven clearly separated layers: (1) a patient-facing mobile app together with a clinician portal; (2) a RESTful API layer built on FastAPI (Python) or NestJS (TypeScript), which acts as the single gateway between every client application and the back-end---validating incoming payloads against FHIR profiles, enforcing authorization tokens issued by Keycloak, orchestrating writes to the database, and exposing versioned endpoints for the mobile app, the clinician portal, and third-party integrations alike; (3) Identity and Access Management (IAM) through Keycloak, providing OpenID Connect, Role-Based Access Control (RBAC), and Multi-Factor Authentication (MFA); (4) an operational PostgreSQL database that stores only pseudonymised data; (5) de-identification pipelines orchestrated by Airflow or Prefect; (6) the OMOP CDM research warehouse with OHDSI Atlas; and (7) an observability stack comprising Prometheus, Grafana, Loki, and an append-only audit log. Everything is containerised with Docker or Podman, vendor-independent, and fully open-source. A zoned view of all components and their interactions is provided in the \repolink{architecture/architecture_map.png}{Architecture Map}, and the data-flow perspective in the \repolink{data_flow/data_flow_diagram.png}{Data Flow Diagram}.
 
 The mobile app, built with Flutter or React Native, is designed to work offline-first: data is stored in an encrypted SQLite database on the device and synchronised over HTTPS in the background when connectivity returns. Given the fatigue that DM1 patients commonly experience, the interface emphasises save-and-return capability, large tappable controls, and accessibility features. The clinician portal (React + TypeScript) provides site-scoped data review, annotation tools, query management, and adherence dashboards. A dedicated data manager console allows configuration of forms, edit checks, and data locks.
 
@@ -120,7 +120,7 @@ The platform's lawful basis for processing health data rests on explicit electro
 
 Every action in the system is recorded in an append-only audit trail that captures the actor, role, action type, the object before and after modification, a UTC timestamp, device and IP information, and a mandatory free-text reason for corrections. Consent is granular (core study, optional elements, secondary research, external sharing) with versioned forms and digital signatures. When a participant withdraws, data collection stops immediately and downstream pipelines are flagged.
 
-Access is governed through RBAC enforced at two levels---Keycloak and the application itself---covering 7 roles and 37 permissions across 11 categories. The full permission breakdown is shown in the \repolink{rbac/rbac_matrix.png}{RBAC Permission Matrix}. The guiding principles are least privilege, site-level scoping, quarterly access reviews, and time-limited elevated permissions that require explicit approval.
+Access is governed through RBAC enforced at two levels---Keycloak and the application itself---covering 7 roles and 38 permissions across 11 categories. The full permission breakdown is shown in the \repolink{rbac/rbac_matrix.png}{RBAC Permission Matrix}. The guiding principles are least privilege, site-level scoping, quarterly access reviews, and time-limited elevated permissions that require explicit approval.
 
 ## Encryption and Incident Response
 
@@ -128,14 +128,14 @@ All data in transit is protected by Transport Layer Security (TLS) 1.2 or higher
 
 ## Risk Assessment
 
-Four key project risks have been identified and assessed. Their likelihood, impact, and planned mitigations are summarised below; the visual matrix is available at \repolink{risk_matrix/risk_matrix.png}{Risk Likelihood--Impact Matrix} and the detailed narrative at \repolink{risk_matrix/risk_assessment.md}{Risk Assessment}.
+Four key project risks have been identified and assessed. Their likelihood (L), impact (I), and planned mitigations are summarised below. Likelihood is rated as **H**igh or **M**edium; impact is rated as **Maj**or or **Mod**erate. The visual matrix is available at \repolink{risk_matrix/risk_matrix.png}{Risk Likelihood--Impact Matrix} and the detailed narrative at \repolink{risk_matrix/risk_assessment.md}{Risk Assessment}.
 
-| Risk | L / I | Mitigation |
-|:-----|:------|:-----------|
-| R1: FHIR/OMOP mapping complexity | H / Maj | Prioritise a minimal variable subset first; phase broader coverage |
-| R2: Suboptimal DM1 usability | M / Maj | Early and repeated usability testing; accessible, fatigue-aware design |
-| R3: Slow governance/legal reviews | H / Mod | Initiate in Month 1; assign named reviewers with agreed turnarounds |
-| R4: FOSS integration complexity | M / Mod | Stand up an integration environment from week 1; test incrementally |
+| Risk                               | L / I   | Mitigation                                                          |
+| :--------------------------------- | :------ | :------------------------------------------------------------------ |
+| R1: FHIR/OMOP mapping complexity   | H / Maj | Prioritise a minimal variable subset first; phase broader coverage  |
+| R2: Suboptimal DM1 usability       | M / Maj | Early and repeated usability testing; accessible, fatigue-aware design |
+| R3: Slow governance/legal reviews  | H / Mod | Initiate in Month 1; assign named reviewers with agreed turnarounds |
+| R4: FOSS integration complexity    | M / Mod | Stand up an integration environment from week 1; test incrementally |
 
 # Work Organisation, Prioritisation, and Timeline
 
@@ -149,7 +149,7 @@ The work is structured in four overlapping workstreams distributed across three 
 
 **Key milestones:** data specification complete (end of March); test environment fully configured (end of April); OMOP ETL validated (mid-May); pilot-ready (end of May).
 
-The responsibility distribution follows the \repolink{raci/raci_matrix.png}{RACI Responsibility Matrix}: the CDM role is Responsible and Accountable for most study design, configuration, testing, and documentation tasks. Development and Technical leads drive FHIR profile creation and app prototyping. Data Engineering is responsible for the OMOP ETL pipeline. The Legal / Data Protection Officer (DPO) function is accountable for the DPIA. Study Leadership steers pilot preparation.
+The responsibility distribution follows the \repolink{raci/raci_matrix.png}{RACI Responsibility Matrix}, which maps eight roles across all deliverables: the CDM role is Responsible and Accountable for most study design, configuration, testing, and documentation tasks. Clinical Investigators are Consulted on data specification, instrument design, and usability. Development and Technical leads drive FHIR profile creation and app prototyping. Data Engineering is responsible for the OMOP ETL pipeline. Biostatistics is Consulted on data specification and analytical workflows. The Legal / Data Protection Officer (DPO) function is accountable for the DPIA. Study Leadership steers pilot preparation. DevOps / SysAdmin supports RBAC verification, audit trail infrastructure, and deployment.
 
 Day-to-day coordination relies on weekly CDM--Development syncs, bi-weekly CDM--Data Engineering alignment meetings, and monthly governance reviews. The DM1-specific interface design---simplified screens, a proxy mode for caregivers, save-and-return, and configurable reminders---is refined continuously based on feedback. Interoperability targets extend beyond the immediate project to include European Reference Network for Neuromuscular Diseases (EURO-NMD) registries (Orphanet, Human Phenotype Ontology [HPO]), EHDS secondary-use pathways, and CDISC as a secondary mapping target for regulatory submissions.
 
