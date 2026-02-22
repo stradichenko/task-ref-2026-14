@@ -203,5 +203,23 @@
     {"label": "Research",         "colour": "#E8F5E9", "border": "#2E7D32"},
     {"label": "External",         "colour": "#ECEFF1", "border": "#455A64"},
     {"label": "Cross-cutting",    "colour": "#FFEBEE", "border": "#C62828"}
+  ],
+  "icon_legend": [
+    {"icon": "MOB",  "meaning": "Mobile Application"},
+    {"icon": "WEB",  "meaning": "Web Portal"},
+    {"icon": "CFG",  "meaning": "Configuration / Admin"},
+    {"icon": "GW",   "meaning": "Gateway"},
+    {"icon": "API",  "meaning": "API Services"},
+    {"icon": "IAM",  "meaning": "Identity & Access Mgmt"},
+    {"icon": "DB",   "meaning": "Database"},
+    {"icon": "ID",   "meaning": "Identity Store"},
+    {"icon": "ETL",  "meaning": "Extract-Transform-Load"},
+    {"icon": "MAP",  "meaning": "Data Mapping"},
+    {"icon": "CDM",  "meaning": "Common Data Model"},
+    {"icon": "ATL",  "meaning": "OHDSI Atlas"},
+    {"icon": "LAB",  "meaning": "Analytics Laboratory"},
+    {"icon": "FHIR", "meaning": "FHIR Interop Resources"},
+    {"icon": "REG",  "meaning": "Disease Registries"},
+    {"icon": "EU",   "meaning": "European Health Data Space"}
   ]
 }

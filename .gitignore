@@ -32,3 +32,6 @@ Thumbs.db
 *.swp
 *.swo
 .vscode/
+
+# ── draw.io backup files ───────────────────────────────────────────
+.$*.bkp

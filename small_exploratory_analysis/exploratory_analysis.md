@@ -53,7 +53,7 @@ if (is_html) {
 ```
 
 <style>
-/* ---------- plotly chart sizing ---------- */
+/* ---- plotly chart sizing ---- */
 .html-widget {
   display: block;
   width: 100% !important;
@@ -63,7 +63,7 @@ if (is_html) {
 .plotly.html-widget {
   width: 100% !important;
 }
-&#10;/* ---------- figure captions ---------- */
+&#10;/* ---- figure captions ---- */
 .figure-caption {
   text-align: center;
   font-style: italic;
@@ -73,7 +73,7 @@ if (is_html) {
   font-size: 0.95em;
   line-height: 1.5;
 }
-&#10;/* ---------- fullscreen mode ---------- */
+&#10;/* ---- fullscreen mode ---- */
 .js-plotly-plot:fullscreen {
   background: white;
   padding: 20px;
@@ -154,7 +154,7 @@ knitr::kable(data.frame(
 ```
 
 | Dataset  | Description    |
-|:---------|:---------------|
+|:---|:-----|
 | cadab    | Cached ADAB    |
 | cadae    | Cached ADAE    |
 | cadaette | Cached ADAETTE |
@@ -191,7 +191,7 @@ regular cardiac monitoring, hepatic and endocrine surveillance, and
 longitudinal safety trackinG:
 
 | Dataset    | CDISC domain | Why selected for DM1                                                                            | Key variables                 |
-|:-----------|:-------------|:------------------------------------------------------------------------------------------------|:------------------------------|
+|:-----|:-----|:--------------------------------|:----------|
 | `cadsl`    | ADSL         | Demographics & baseline—needed for any analysis and to check arm balance                        | AGE, SEX, RACE, ARM, BMRKR1/2 |
 | `cadvs`    | ADVS         | Vital signs over time—cardiovascular monitoring is critical in DM1 (cardiac conduction defects) | SYSBP, DIABP, PULSE per visit |
 | `cadlb`    | ADLB         | Lab biomarkers—hepatic (ALT) and inflammatory (CRP) surveillance relevant to DM1 therapies      | ALT, CRP, IGA per visit       |
@@ -202,7 +202,7 @@ ECG intervals, ADQS for patient-reported outcomes) would become relevant
 in a full production analysis; the proposed system is designed to
 accommodate all of them.
 
-------------------------------------------------------------------------
+------------------------
 
 ## 1. Data loading and preparation
 
@@ -223,7 +223,7 @@ tibble(
 ```
 
 | Dataset |  Rows | Columns |
-|:--------|------:|--------:|
+|:----|--:|----:|
 | ADSL    |   400 |      55 |
 | ADVS    | 16800 |      87 |
 | ADLB    |  8400 |     102 |
@@ -269,7 +269,7 @@ bind_rows(
 ```
 
 | Dataset | Variable  | Class          | Non-NA % | Distinct | Example                              |
-|:--------|:----------|:---------------|:---------|---------:|:-------------------------------------|
+|:----|:----|:-----|:---|---:|:-------------|
 | ADSL    | STUDYID   | character      | 100%     |        1 | AB12345                              |
 | ADSL    | USUBJID   | character      | 100%     |      400 | AB12345-CHN-3-id-128                 |
 | ADSL    | SUBJID    | character      | 100%     |      400 | id-128                               |
@@ -618,7 +618,7 @@ adaette <- adaette %>% filter(USUBJID %in% selected_ids)
 After subsampling we have **200 patients** across **63 sites** and **3
 treatment arms** (A: Drug X, B: Placebo, C: Combination).
 
-------------------------------------------------------------------------
+------------------------
 
 ## 2. Demographic overview by treatment arm
 
@@ -692,7 +692,7 @@ its goal. A formal test (e.g. ANOVA on age, chi-square on sex) could
 confirm this, but for an exploratory pass the visual check is
 sufficient.
 
-------------------------------------------------------------------------
+------------------------
 
 ## 3. Vital signs trajectories over time
 
@@ -845,7 +845,7 @@ disease). In a real DM1 dataset we would also overlay **cardiac
 conduction metrics** (PR interval, QTc) from the ECG domain—cross-modal
 exploration that the proposed system is designed to support.
 
-------------------------------------------------------------------------
+------------------------
 
 ## 4. Laboratory biomarker change from baseline
 
@@ -951,7 +951,7 @@ exceeds 3$\times$ ULN (Hy’s Law boundary) and join their data with the
 genomic modality to look for variant-level associations—exactly the
 cross-modal workflow the system is designed to enable.
 
-------------------------------------------------------------------------
+------------------------
 
 ## 5. Kaplan-Meier: time to first adverse event
 
@@ -973,7 +973,7 @@ knitr::kable(tte_params, col.names = c("Code", "Description"))
 ```
 
 | Code     | Description                                           |
-|:---------|:------------------------------------------------------|
+|:---|:------------------|
 | AEREPTTE | Time to end of AE reporting period                    |
 | AETOT1   | Number of occurrences of any adverse event            |
 | AETOT2   | Number of occurrences of any serious adverse event    |
@@ -1153,14 +1153,14 @@ sex, disease severity, CTG repeat length), and the result would be
 cross-referenced with the genomic and proteomic modalities to identify
 biological correlates of adverse event risk.
 
-------------------------------------------------------------------------
+------------------------
 
 ## Summary
 
 The four analyses above trace a deliberate progression:
 
 | \#  | Analysis                 | Type                        | System capability it demonstrates              |
-|:----|:-------------------------|:----------------------------|:-----------------------------------------------|
+|:--|:---------|:----------|:-----------------|
 | 1   | Demographic overview     | Descriptive                 | Fast queries over the ADSL materialised view   |
 | 2   | SBP trajectories         | Longitudinal / time         | Cross-visit exploration of vital signs         |
 | 3   | ALT & CRP change from BL | Longitudinal / safety       | Change-from-baseline monitoring for dashboards |
@@ -1177,7 +1177,7 @@ In the proposed dynamic analysis system, each of these would be:
 - **Version-controlled and reproducible**, with every result tied to a
   code version, data-cut date, and parameter set.
 
-------------------------------------------------------------------------
+------------------------
 
 ## Reproducibility
 
@@ -1193,7 +1193,7 @@ Rscript -e 'rmarkdown::render("small_exploratory_analysis/exploratory_analysis.R
 ```
 
 | Package               | Purpose                                 |
-|:----------------------|:----------------------------------------|
+|:--------|:--------------|
 | `tidyverse`           | Data wrangling and ggplot2 plotting     |
 | `survival`            | Kaplan-Meier estimation, log-rank test  |
 | `random.cdisc.data`   | Synthetic CDISC ADaM datasets           |

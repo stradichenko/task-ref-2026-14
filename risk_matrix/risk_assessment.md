@@ -7,7 +7,7 @@ This document accompanies the risk matrix and describes the rationale behind eac
 Risks are evaluated on two axes, each scored from 0 (lowest) to 4 (highest).
 
 | Score | Likelihood | Impact |
-|-------|-----------|--------|
+|---|-----|----|
 | 0 | Very Low: no credible scenario leads to this event within the project window. | Negligible: no measurable effect on timeline, data quality, or compliance. |
 | 1 | Low: event is conceivable but unlikely given the planned controls. | Minor: small delay or localised rework with no downstream consequence. |
 | 2 | Medium: event has occurred in comparable projects and could occur here. | Moderate: noticeable delay, partial rework, or degraded functionality in one workstream. |
@@ -61,7 +61,7 @@ Mitigation. Establish an integration environment that closely resembles the prod
 ### Summary
 
 | Risk | Likelihood | Impact | Severity | Primary mitigation |
-|------|-----------|--------|----------|-------------------|
+|--|-----|----|----|-------|
 | R1: FHIR/OMOP mapping complexity | High (3) | Major (3) | High | Prioritise minimal variable subset for end-to-end mapping; phase broader coverage. |
 | R2: Suboptimal DM1 usability | Medium (2) | Major (3) | High | Early and repeated usability testing; fatigue-aware and accessible design. |
 | R3: Slow governance/legal reviews | High (3) | Moderate (2) | Medium-High | Start governance in Month 1; named reviewers with agreed turnaround windows. |
@@ -72,5 +72,5 @@ The overall risk profile is manageable within the three-month timeline, provided
 ### Document Control
 
 | Version | Date | Author | Summary of Changes |
-|---------|------|--------|--------------------|
+|---|--|----|--------|
 | 0.1 | 2026-03-01 | Clinical Data Management and Technical Team | Initial risk assessment covering four risks aligned with the three-month project plan. |

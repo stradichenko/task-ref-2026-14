@@ -168,7 +168,49 @@ for zid in ZONE_ORDER:
 
 # ── Figure size ───────────────────────────────────────────────────
 TITLE_H  = 5.5
-LEGEND_H = 7.0
+
+# ── Pre-compute legend height dynamically ────────────────────────
+# We need: flow-sequence rows, zone-colour rows, icon-key rows + titles/gaps
+# Widths are estimated here; exact cols are computed later but we mirror the logic.
+_pre_leg_usable = ZONE_CONTENT_W + SIDEBAR_W * 0.30 - 2 * 1.5  # same as LEG_USABLE_W
+
+def _pre_cols(items_w, gap=0.8):
+    widest = max(items_w) + gap
+    return max(1, int(_pre_leg_usable // widest))
+
+_flow_texts = [
+    "HTTPS request from clients", "Token validation (Keycloak)",
+    "Validated & authorised request", "Pseudonymised write / ID resolution",
+    "Operational data export", "De-identified data", "OMOP CDM load",
+    "Research query (Atlas / Analytics)", "FHIR R4 interoperability",
+    "Governed external sharing",
+]
+_flow_pref = BADGE_R * 2 + 1.10
+_flow_c = _pre_cols([_flow_pref + est_w(t, FLOW_SZ) for t in _flow_texts])
+_flow_r = math.ceil(10 / _flow_c)
+
+_zone_labels = ["Client", "API & Identity", "Operational Data",
+                "Processing & ETL", "Research", "External", "Cross-cutting"]
+_zone_pref = 1.10 + 0.30
+_zone_c = _pre_cols([_zone_pref + est_w(t, LEGEND_SZ) for t in _zone_labels])
+_zone_r = math.ceil(7 / _zone_c)
+
+_icon_meanings = [
+    "Mobile Application", "Web Portal", "Configuration / Admin", "Gateway",
+    "API Services", "Identity & Access Mgmt", "Database", "Identity Store",
+    "Extract-Transform-Load", "Data Mapping", "Common Data Model",
+    "OHDSI Atlas", "Analytics Laboratory", "FHIR Interop Resources",
+    "Disease Registries", "European Health Data Space",
+]
+_icon_pref = 1.0 + 0.30
+_icon_c = _pre_cols([_icon_pref + est_w(t, LEGEND_SZ - 4) for t in _icon_meanings])
+_icon_r = math.ceil(16 / _icon_c)
+
+LEGEND_H = (1.5                              # top gap
+           + 1.4 + _flow_r * 1.50            # flow title + rows
+           + 1.4 + 0.6 + _zone_r * 1.4       # zone title + rows
+           + 1.6 + 0.6 + _icon_r * 1.3        # icon title + rows
+           + 1.0)                              # bottom pad
 
 FIG_W = GAP_X + SIDEBAR_W + GAP_X + ZONE_CONTENT_W + GAP_X + SIDEBAR_W + GAP_X
 FIG_H = (TITLE_H
@@ -515,6 +557,23 @@ for fid, tid, num, rad in vertical_connections:
         drawn_badges.add(num)
 
 # ═══════════════════════════════════════════════════════════════════
+#  LEGEND HELPERS  — dynamic column count from text width
+# ═══════════════════════════════════════════════════════════════════
+LEG_MARGIN   = 1.5                              # left/right padding inside usable band
+LEG_USABLE_L = ZONE_LEFT - SIDEBAR_W * 0.15     # stretch slightly into sidebar gap
+LEG_USABLE_R = ZONE_RIGHT + SIDEBAR_W * 0.15
+LEG_USABLE_W = LEG_USABLE_R - LEG_USABLE_L - 2 * LEG_MARGIN
+LEG_CENTRE   = (LEG_USABLE_L + LEG_USABLE_R) / 2
+
+
+def auto_cols(items_widths, gap=0.8):
+    """Return the max columns that fit all items without overlap."""
+    widest = max(items_widths) + gap
+    cols = max(1, int(LEG_USABLE_W // widest))
+    return cols, LEG_USABLE_W / cols
+
+
+# ═══════════════════════════════════════════════════════════════════
 #  DATA-FLOW SEQUENCE LEGEND
 # ═══════════════════════════════════════════════════════════════════
 flow_steps = [
@@ -530,22 +589,25 @@ flow_steps = [
     (10, "Governed external sharing"),
 ]
 
+# Measure widths: badge diameter + gap + text
+_flow_prefix = BADGE_R * 2 + 1.10            # badge + spacing to text
+_flow_widths = [_flow_prefix + est_w(sl, FLOW_SZ) for _, sl in flow_steps]
+FLOW_COLS, flow_item_w = auto_cols(_flow_widths)
+
 legend_top = ZONES_BOTTOM - 1.5
-ax.text(ZONE_LEFT + ZONE_CONTENT_W / 2, legend_top,
+ax.text(LEG_CENTRE, legend_top,
         "Data Flow Sequence",
         ha="center", va="center",
         fontsize=FLOW_HEAD_SZ, fontweight="bold",
         color="#1A1A2E", fontfamily=FF)
 
-FLOW_COLS = 5
-flow_item_w = ZONE_CONTENT_W / FLOW_COLS
 flow_row_h = 1.50
 ftop = legend_top - 1.4
 
 for si, (sn, sl) in enumerate(flow_steps):
     row = si // FLOW_COLS
     col = si % FLOW_COLS
-    sx = ZONE_LEFT + col * flow_item_w + 1.0
+    sx = LEG_USABLE_L + LEG_MARGIN + col * flow_item_w + BADGE_R
     sy = ftop - row * flow_row_h
 
     badge_clr = step_colours.get(str(sn), "#1565C0")
@@ -561,22 +623,76 @@ for si, (sn, sl) in enumerate(flow_steps):
             ha="left", va="center",
             fontsize=FLOW_SZ, color="#37474F", fontfamily=FF)
 
-# ── Zone-colour legend row ────────────────────────────────────────
+flow_rows = math.ceil(len(flow_steps) / FLOW_COLS)
+
+# ── Zone-colour legend (dynamic columns) ─────────────────────────
 legend_items = config.get("legend_groups", [])
 n_leg = len(legend_items)
-_leg_y = ftop - 2 * flow_row_h - 1.2
-leg_item_w = ZONE_CONTENT_W / n_leg
+_zone_prefix = 1.10 + 0.30                      # swatch width + gap
+_zone_widths = [_zone_prefix + est_w(it["label"], LEGEND_SZ) for it in legend_items]
+ZONE_LEG_COLS, zone_leg_item_w = auto_cols(_zone_widths)
+zone_leg_row_h = 1.4
+
+_leg_y_base = ftop - flow_rows * flow_row_h - 1.4
+
+ax.text(LEG_CENTRE, _leg_y_base + 0.6,
+        "Zone Colours",
+        ha="center", va="center",
+        fontsize=FLOW_HEAD_SZ - 6, fontweight="bold",
+        color="#1A1A2E", fontfamily=FF)
 
 for li, item in enumerate(legend_items):
-    lx = ZONE_LEFT + li * leg_item_w + 0.30
+    row = li // ZONE_LEG_COLS
+    col = li % ZONE_LEG_COLS
+    lx = LEG_USABLE_L + LEG_MARGIN + col * zone_leg_item_w
+    ly = _leg_y_base - row * zone_leg_row_h
     ax.add_patch(FancyBboxPatch(
-        (lx, _leg_y - 0.40), 1.10, 0.80,
+        (lx, ly - 0.40), 1.10, 0.80,
         boxstyle="round,pad=0.08",
         facecolor=item["colour"], edgecolor=item["border"],
         linewidth=3.0, alpha=0.70))
-    ax.text(lx + 1.40, _leg_y,
+    ax.text(lx + 1.40, ly,
             item["label"], ha="left", va="center",
             fontsize=LEGEND_SZ, color="#37474F", fontfamily=FF)
+
+zone_leg_rows = math.ceil(n_leg / ZONE_LEG_COLS)
+
+# ── Icon acronym legend (dynamic columns) ────────────────────────
+icon_legend = config.get("icon_legend", [])
+if icon_legend:
+    n_icons = len(icon_legend)
+    icon_badge_r = 0.50
+    icon_leg_row_h = 1.3
+    _icon_prefix = icon_badge_r * 2 + 0.30       # badge diameter + gap
+    _icon_widths = [_icon_prefix + est_w(e["meaning"], LEGEND_SZ - 4)
+                    for e in icon_legend]
+    ICON_LEG_COLS, icon_item_w = auto_cols(_icon_widths)
+
+    _icon_top = _leg_y_base - zone_leg_rows * zone_leg_row_h - 1.6
+
+    ax.text(LEG_CENTRE, _icon_top + 0.6,
+            "Icon Key",
+            ha="center", va="center",
+            fontsize=FLOW_HEAD_SZ - 6, fontweight="bold",
+            color="#1A1A2E", fontfamily=FF)
+
+    for ii, entry in enumerate(icon_legend):
+        row = ii // ICON_LEG_COLS
+        col = ii % ICON_LEG_COLS
+        ix = LEG_USABLE_L + LEG_MARGIN + col * icon_item_w + icon_badge_r
+        iy = _icon_top - row * icon_leg_row_h
+
+        ax.add_patch(plt.Circle(
+            (ix, iy), icon_badge_r,
+            facecolor="#546E7A", edgecolor="white",
+            linewidth=2.0, zorder=5))
+        ax.text(ix, iy, entry["icon"],
+                ha="center", va="center",
+                fontsize=24, fontweight="bold",
+                color="white", zorder=6, fontfamily=FF)
+        ax.text(ix + icon_badge_r + 0.30, iy,
+                entry["meaning"], ha="left", va="center",
+                fontsize=LEGEND_SZ - 4, color="#37474F", fontfamily=FF)
 
 # ═══════════════════════════════════════════════════════════════════
 plt.tight_layout(pad=0.3)

@@ -33,28 +33,15 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-We are designing a **dynamic analysis system** for a database containing
-clinical, genomic, and proteomic data from **200 patients with Myotonic
-Dystrophy Type 1 (DM1)**, collected across **25 hospitals** and entered by
-**13 different personnel**.
+We are designing a **dynamic analysis system** for a database containing clinical, genomic, and proteomic data from **200 patients with Myotonic Dystrophy Type 1 (DM1)**, collected across **25 hospitals** and entered by **13 different personnel**.
 
-Myotonic Dystrophy Type 1 is the most common adult-onset muscular dystrophy.
-It is a **multi-systemic** disorder: beyond progressive muscle weakness,
-patients experience cardiac conduction defects, endocrine abnormalities,
-cataracts, and cognitive impairment. A well-designed analytical system must
-therefore support exploration across **multiple clinical domains** and detect
-subtle longitudinal changes that unfold over months to years.
+Myotonic Dystrophy Type 1 is the most common adult-onset muscular dystrophy. It is a **multi-systemic** disorder: beyond progressive muscle weakness, patients experience cardiac conduction defects, endocrine abnormalities, cataracts, and cognitive impairment. A well-designed analytical system must therefore support exploration across **multiple clinical domains** and detect subtle longitudinal changes that unfold over months to years.
 
 ### Data source & Environment setup
 
-We use the publicly available
-[`random.cdisc.data`](https://insightsengineering.github.io/random.cdisc.data/)
-package from the [pharmaverse](https://pharmaverse.org/) ecosystem, which
-generates synthetic CDISC ADaM datasets that mirror the structure of a real
-multi-centre clinical trial. 
+We use the publicly available [`random.cdisc.data`](https://insightsengineering.github.io/random.cdisc.data/) package from the [pharmaverse](https://pharmaverse.org/) ecosystem, which generates synthetic CDISC ADaM datasets that mirror the structure of a real multi-centre clinical trial.
 
-All dependencies are declared in the project's Nix flake, so by using
-`nix develop` every package below is available without manual installation.
+All dependencies are declared in the project's Nix flake, so by using `nix develop` every package below is available without manual installation.
 
 ```{r load-packages}
 ## All packages are provided by the Nix flake — no manual installation needed.
@@ -208,9 +195,7 @@ if (is_html) {
 ## 1. Data loading and preparation: Discovering available datasets
 
 
-The full catalogue of cached datasets can be enumerated programmatically. This
-is useful when onboarding new team members or scripting automated pipelines
-that must know what data is available:
+The full catalogue of cached datasets can be enumerated programmatically. This is useful when onboarding new team members or scripting automated pipelines that must know what data is available:
 
 <details>
 <summary><strong>Click to expand: all cached datasets</strong></summary>
@@ -227,23 +212,16 @@ knitr::kable(data.frame(
 
 </details>
 
-From detailed inspection we determine that this package ships with **20 cached datasets** covering domains such as adverse events (ADAE), ECG (ADEG), exposure (ADEX),
-medical history (ADMH), pharmacokinetics (ADPC/ADPP), questionnaires (ADQS),
-tumour response (ADRS/ADTR), and more.
+From detailed inspection we determine that this package ships with **20 cached datasets** covering domains such as adverse events (ADAE), ECG (ADEG), exposure (ADEX), medical history (ADMH), pharmacokinetics (ADPC/ADPP), questionnaires (ADQS), tumour response (ADRS/ADTR), and more.
 
-For this exploratory pass we select **four** that map naturally to the DM1
-clinical context---as outlined in the consensus-based care recommendations for
-adults with DM1
-([Ashizawa *et al.*, 2018](https://doi.org/10.1212/CPJ.0000000000000531)),
-which emphasise regular cardiac monitoring, hepatic and endocrine surveillance,
-and longitudinal safety trackinG:
+For this exploratory pass we select **four** that map naturally to the DM1 clinical context - as outlined in the consensus-based care recommendations for adults with DM1 ([Ashizawa *et al.*, 2018](https://doi.org/10.1212/CPJ.0000000000000531)), which emphasise regular cardiac monitoring, hepatic and endocrine surveillance, and longitudinal safety tracking:
 
 | Dataset    | CDISC domain | Why selected for DM1                                                  | Key variables                  |
 |:-----------|:-------------|:----------------------------------------------------------------------|:-------------------------------|
-| `cadsl`    | ADSL         | Demographics & baseline---needed for any analysis and to check arm balance | AGE, SEX, RACE, ARM, BMRKR1/2 |
-| `cadvs`    | ADVS         | Vital signs over time---cardiovascular monitoring is critical in DM1 (cardiac conduction defects) | SYSBP, DIABP, PULSE per visit  |
-| `cadlb`    | ADLB         | Lab biomarkers---hepatic (ALT) and inflammatory (CRP) surveillance relevant to DM1 therapies | ALT, CRP, IGA per visit        |
-| `cadaette` | ADAETTE      | Time-to-adverse-event---the most information-rich safety comparison across arms | Time, event/censor, by arm     |
+| `cadsl`    | ADSL         | Demographics & baseline - needed for any analysis and to check arm balance | AGE, SEX, RACE, ARM, BMRKR1/2 |
+| `cadvs`    | ADVS         | Vital signs over time - cardiovascular monitoring is critical in DM1 (cardiac conduction defects) | SYSBP, DIABP, PULSE per visit  |
+| `cadlb`    | ADLB         | Lab biomarkers - hepatic (ALT) and inflammatory (CRP) surveillance relevant to DM1 therapies | ALT, CRP, IGA per visit        |
+| `cadaette` | ADAETTE      | Time-to-adverse-event - the most information-rich safety comparison across arms | Time, event/censor, by arm     |
 
 ```{r load-data}
 data("cadsl");    adsl    <- cadsl
@@ -258,21 +236,13 @@ tibble(
 ) %>% knitr::kable(align = "lrr")
 ```
 
-Datasets not used here (e.g. ADAE for individual AE listings, ADEG for ECG
-intervals, ADQS for patient-reported outcomes) would become relevant in a
-full production analysis; the proposed system is designed to accommodate all
-of them.
+Datasets not used here (e.g. ADAE for individual AE listings, ADEG for ECG intervals, ADQS for patient-reported outcomes) would become relevant in a full production analysis; the proposed system is designed to accommodate all of them.
 
 ---
 
 ### Variable inventory
 
-Before any modelling we need to understand **what each dataset contains** and
-which columns are candidates for specific analytical tasks. The table below
-profiles every variable: its R class, the percentage of non-missing values, the
-number of distinct values, and a sample entry. This is the kind of metadata
-catalogue the proposed system would expose through an automated data-dictionary
-endpoint.
+Before any modelling we need to understand **what each dataset contains** and which columns are candidates for specific analytical tasks. The table below profiles every variable: its R class, the percentage of non-missing values, the number of distinct values, and a sample entry. This is the kind of metadata catalogue the proposed system would expose through an automated data-dictionary endpoint.
 
 <details>
 <summary><strong>Click to expand: variable inventory for all 4 datasets</strong></summary>
@@ -304,22 +274,15 @@ bind_rows(
 
 The inventory helps us **discriminate which variables to use for each analysis**:
 
-- **Categorical** variables with few distinct values (e.g. `ARM`, `SEX`, `RACE`,
-  `PARAMCD`) &rarr; grouping / stratification factors.
-- **Continuous numeric** columns (e.g. `AVAL`, `CHG`, `BASE`, `AGE`, `BMRKR1`)
-  &rarr; outcome or covariate in regressions, boxplots, trajectories.
-- **Date / time** columns (e.g. `TRTSDTM`, `TRTEDTM`, `ADTM`) &rarr;
-  time-on-treatment, duration calculations.
-- **Censoring indicators** (`CNSR`, `EVNTDESC`) &rarr; time-to-event (survival)
-  modelling.
-- **Visit identifiers** (`AVISIT`, `AVISITN`) &rarr; longitudinal panel
-  structure, repeated-measures models.
+- **Categorical** variables with few distinct values (e.g. `ARM`, `SEX`, `RACE`, `PARAMCD`) &rarr; grouping / stratification factors.
+- **Continuous numeric** columns (e.g. `AVAL`, `CHG`, `BASE`, `AGE`, `BMRKR1`) &rarr; outcome or covariate in regressions, boxplots, trajectories.
+- **Date / time** columns (e.g. `TRTSDTM`, `TRTEDTM`, `ADTM`) &rarr; time-on-treatment, duration calculations.
+- **Censoring indicators** (`CNSR`, `EVNTDESC`) &rarr; time-to-event (survival) modelling.
+- **Visit identifiers** (`AVISIT`, `AVISITN`) &rarr; longitudinal panel structure, repeated-measures models.
 
 </details>
 
-The cached data ships with **400 subjects**. For the purpose of the intent, we are 
-subsampling to match the intended scale. In a production system this step would
-not exist---the warehouse query would simply return the real cohort.
+The cached data ships with **400 subjects**. For the purpose of the intent, we are subsampling to match the intended scale. In a production system this step would not exist - the warehouse query would simply return the real cohort.
 
 ```{r subsample}
 selected_ids <- adsl %>%
@@ -333,19 +296,13 @@ adlb    <- adlb    %>% filter(USUBJID %in% selected_ids)
 adaette <- adaette %>% filter(USUBJID %in% selected_ids)
 ```
 
-After subsampling we have **`r n_distinct(adsl$USUBJID)` patients** across
-**`r n_distinct(adsl$SITEID)` sites** and **`r n_distinct(adsl$ARM)`
-treatment arms** (`r paste(levels(adsl$ARM), collapse = ", ")`).
+After subsampling we have **`r n_distinct(adsl$USUBJID)` patients** across **`r n_distinct(adsl$SITEID)` sites** and **`r n_distinct(adsl$ARM)` treatment arms** (`r paste(levels(adsl$ARM), collapse = ", ")`).
 
 ---
 
 ## 2. Demographic overview by treatment arm
 
-The first step in any clinical analysis is understanding *who* is in the study.
-In a multi-centre trial we need to verify that treatment arms are balanced with
-respect to key covariates---imbalances in age or sex could confound every
-downstream comparison. In DM1 specifically, **age at onset correlates with CTG
-repeat length**, so any distributional skew is a red flag.
+The first step in any clinical analysis is understanding *who* is in the study. In a multi-centre trial we need to verify that treatment arms are balanced with respect to key covariates - imbalances in age or sex could confound every downstream comparison. In DM1 specifically, **age at onset correlates with CTG repeat length**, so any distributional skew is a red flag.
 
 We show two complementary views:
 
@@ -396,29 +353,20 @@ if (is_html) {
 
 <p align="center"><em><strong>Fig. 1.</strong> Demographic overview by treatment arm. Left: patient counts by arm and sex. Right: overlaid age density curves by treatment arm.</em></p>
 
-The three arms are roughly balanced in size and sex ratio. Age
-distributions overlap substantially, suggesting randomisation achieved its goal.
-A formal test (e.g. ANOVA on age, chi-square on sex) could confirm this, but for
-an exploratory pass the visual check is sufficient.
+The three arms are roughly balanced in size and sex ratio. Age distributions overlap substantially, suggesting randomisation achieved its goal. A formal test (e.g. ANOVA on age, chi-square on sex) could confirm this, but for an exploratory pass the visual check is sufficient.
 
 ---
 
 ## 3. Vital signs trajectories over time
 
-DM1 is a multi-systemic disease with well-documented **cardiovascular
-involvement**---cardiac conduction defects, arrhythmias, and in some cohorts
-altered blood pressure regulation. Monitoring **systolic blood pressure (SBP)**
-across scheduled study visits is therefore clinically meaningful.
+DM1 is a multi-systemic disease with well-documented **cardiovascular involvement** - cardiac conduction defects, arrhythmias, and in some cohorts altered blood pressure regulation. Monitoring **systolic blood pressure (SBP)** across scheduled study visits is therefore clinically meaningful.
 
 We use a **spaghetti-plus-mean** design:
 
-- **Thin grey lines:** individual patient trajectories, revealing the full range
-  of within-patient variability.
-- **Coloured ribbon + line:** group mean $\pm$ 95% confidence interval by arm,
-  showing the central trend.
+- **Thin grey lines:** individual patient trajectories, revealing the full range of within-patient variability.
+- **Coloured ribbon + line:** group mean $\pm$ 95% confidence interval by arm, showing the central trend.
 
-This layered approach lets the reader simultaneously assess heterogeneity and
-treatment-level patterns without suppressing the underlying data.
+This layered approach lets the reader simultaneously assess heterogeneity and treatment-level patterns without suppressing the underlying data.
 
 ```{r sbp-trajectories, fig.width=12, fig.height=5}
 sbp <- advs %>%
@@ -540,11 +488,7 @@ if (is_html) {
 
 <p align="center"><em><strong>Fig. 2.</strong> Systolic blood pressure trajectories over scheduled study visits. Individual patient traces (grey) are overlaid with group mean ± 95 % CI by treatment arm.</em></p>
 
-Mean SBP stays relatively stable across visits in all three
-arms, with wide individual variability (a realistic pattern for a heterogeneous
-disease). In a real DM1 dataset we would also overlay **cardiac conduction
-metrics** (PR interval, QTc) from the ECG domain---cross-modal exploration that
-the proposed system is designed to support.
+Mean SBP stays relatively stable across visits in all three arms, with wide individual variability (a realistic pattern for a heterogeneous disease). In a real DM1 dataset we would also overlay **cardiac conduction metrics** (PR interval, QTc) from the ECG domain - cross-modal exploration that the proposed system is designed to support.
 
 ---
 
@@ -552,16 +496,10 @@ the proposed system is designed to support.
 
 In DM1, hepatic and inflammatory markers deserve close surveillance:
 
-- **ALT (Alanine Aminotransferase):** a standard liver-function marker. Many
-  candidate therapies for muscular dystrophies carry hepatotoxicity risk.
-- **CRP (C-Reactive Protein):** a systemic inflammation marker increasingly
-  studied in muscular dystrophies, where chronic low-grade inflammation
-  accompanies muscle degeneration.
+- **ALT (Alanine Aminotransferase):** a standard liver-function marker. Many candidate therapies for muscular dystrophies carry hepatotoxicity risk.
+- **CRP (C-Reactive Protein):** a systemic inflammation marker increasingly studied in muscular dystrophies, where chronic low-grade inflammation accompanies muscle degeneration.
 
-Showing **change from baseline** (CHG) rather than raw values lets us focus on
-*within-patient shifts*---the natural framing for a longitudinal study and for
-the materialised views we proposed in the analysis system (the `patient-level
-summary` view stores exactly this kind of derived quantity).
+Showing **change from baseline** (CHG) rather than raw values lets us focus on *within-patient shifts* - the natural framing for a longitudinal study and for the materialised views we proposed in the analysis system (the `patient-level summary` view stores exactly this kind of derived quantity).
 
 ```{r lab-chg-baseline, fig.width=11, fig.height=8}
 lab_chg <- adlb %>%
@@ -635,28 +573,15 @@ if (is_html) {
 
 <p align="center"><em><strong>Fig. 3.</strong> Change from baseline in ALT and CRP across study visits by treatment arm. The dashed line marks zero change; boxes show the inter-quartile range with whiskers extending to 1.5 × IQR.</em></p>
 
-Both ALT and CRP change distributions remain centred around
-zero with no obvious arm-level divergence---a reassuring safety signal.
-The inter-quartile ranges widen slightly at later visits, consistent with
-increasing variability as follow-up time grows and some patients are lost. In a
-real DM1 study, we would flag individual patients whose ALT exceeds 3$\times$
-ULN (Hy's Law boundary) and join their data with the genomic modality to look
-for variant-level associations---exactly the cross-modal workflow the system is
-designed to enable.
+Both ALT and CRP change distributions remain centred around zero with no obvious arm-level divergence - a reassuring safety signal. The inter-quartile ranges widen slightly at later visits, consistent with increasing variability as follow-up time grows and some patients are lost. In a real DM1 study, we would flag individual patients whose ALT exceeds 3$\times$ ULN (Hy's Law boundary) and join their data with the genomic modality to look for variant-level associations - exactly the cross-modal workflow the system is designed to enable.
 
 ---
 
 ## 5. Kaplan-Meier: time to first adverse event
 
-Time-to-event analysis is the most information-rich way to compare safety
-profiles across treatment arms. The Kaplan-Meier estimator gives non-parametric
-survival curves; the **log-rank test** provides a formal between-arm comparison.
+Time-to-event analysis is the most information-rich way to compare safety profiles across treatment arms. The Kaplan-Meier estimator gives non-parametric survival curves; the **log-rank test** provides a formal between-arm comparison.
 
-In the proposed analysis system, this would be exposed as a **parameterised
-module**: the researcher selects the event of interest (any AE, serious AE,
-grade 3--5 AE), stratification variables, and optional covariates via a
-configuration file, and the pipeline produces the curves and test results
-automatically.
+In the proposed analysis system, this would be exposed as a **parameterised module**: the researcher selects the event of interest (any AE, serious AE, grade 3-5 AE), stratification variables, and optional covariates via a configuration file, and the pipeline produces the curves and test results automatically.
 
 ```{r tte-prepare}
 # Available time-to-event endpoints
@@ -664,8 +589,7 @@ tte_params <- adaette %>% distinct(PARAMCD, PARAM)
 knitr::kable(tte_params, col.names = c("Code", "Description"))
 ```
 
-We select **AETTE1** (*time to first occurrence of any adverse event*)---the
-broadest safety endpoint.
+We select **AETTE1** (*time to first occurrence of any adverse event*) - the broadest safety endpoint.
 
 ```{r tte-fit}
 tte_data <- adaette %>%
@@ -692,9 +616,7 @@ lr_test <- survdiff(surv_obj ~ ARM, data = tte_data)
 lr_pval <- pchisq(lr_test$chisq, df = length(lr_test$n) - 1, lower.tail = FALSE)
 ```
 
-**Events observed:** `r sum(tte_data$event)` / `r nrow(tte_data)` patients
-experienced the event.
-**Log-rank p-value:** `r sprintf("%.4f", lr_pval)`.
+**Events observed:** `r sum(tte_data$event)` / `r nrow(tte_data)` patients experienced the event. **Log-rank p-value:** `r sprintf("%.4f", lr_pval)`.
 
 ```{r km-plot, fig.width=10, fig.height=7}
 km_tidy <- tidy(km_fit) %>%
@@ -820,13 +742,7 @@ if (is_html) {
 
 <p align="center"><em><strong>Fig. 4.</strong> Kaplan–Meier curves for time to first adverse event by treatment arm, with 95 % confidence bands and censoring tick marks. The log-rank test p-value is annotated.</em></p>
 
-The Kaplan-Meier curves separate modestly between arms, with a
-log-rank p-value of **`r sprintf("%.4f", lr_pval)`**---nominally significant at
-the 0.05 level. In a real DM1 study this would warrant further investigation
-with a **Cox proportional-hazards model** adjusting for baseline covariates
-(age, sex, disease severity, CTG repeat length), and the result would be
-cross-referenced with the genomic and proteomic modalities to identify
-biological correlates of adverse event risk.
+The Kaplan-Meier curves separate modestly between arms, with a log-rank p-value of **`r sprintf("%.4f", lr_pval)`** - nominally significant at the 0.05 level. In a real DM1 study this would warrant further investigation with a **Cox proportional-hazards model** adjusting for baseline covariates (age, sex, disease severity, CTG repeat length), and the result would be cross-referenced with the genomic and proteomic modalities to identify biological correlates of adverse event risk.
 
 ---
 
@@ -843,12 +759,8 @@ The four analyses above trace a deliberate progression:
 
 In the proposed dynamic analysis system, each of these would be:
 
-- **Runnable from a notebook** (JupyterLab / RStudio) connected to the OMOP CDM
-  warehouse via read-only, role-scoped credentials.
-- **Surfaced in dashboards** (Grafana for operational metrics, Apache Superset
-  for research exploration).
-- **Schedulable as automated reports** via Airflow or Prefect DAGs, with output
-  rendered to PDF/HTML and distributed to defined recipients.
-- **Version-controlled and reproducible**, with every result tied to a code
-  version, data-cut date, and parameter set.
+- **Runnable from a notebook** (JupyterLab / RStudio) connected to the OMOP CDM warehouse via read-only, role-scoped credentials.
+- **Surfaced in dashboards** (Grafana for operational metrics, Apache Superset for research exploration).
+- **Schedulable as automated reports** via Airflow or Prefect DAGs, with output rendered to PDF/HTML and distributed to defined recipients.
+- **Version-controlled and reproducible**, with every result tied to a code version, data-cut date, and parameter set.
 

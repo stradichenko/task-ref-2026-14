@@ -1,8 +1,8 @@
 ---
 title: |
-  Annex --- Supporting Figures and Tables \
-  \vspace{0.2cm} \large Clinical Data Management for DM1 --- IGTP
-author: "Gary Espitia"
+  Annex - Supporting Figures and Tables \
+  \vspace{0.2cm} \large Clinical Data Management for DM1 - IGTP
+author: "Gary Espitia - espitiagmd@gmail.com"
 date: "February 2026"
 geometry: "margin=2cm"
 fontsize: 10pt
@@ -21,8 +21,8 @@ header-includes:
   - \renewcommand{\footnotesize}{\fontsize{7}{8.4}\selectfont}
   - \normalsize
   - \pagestyle{fancy}
-  - \fancyhead[L]{\footnotesize Annex --- Figures and Tables}
-  - \fancyhead[R]{\footnotesize IGTP --- Clinical Data Manager}
+  - \fancyhead[L]{\footnotesize Annex - Figures and Tables}
+  - \fancyhead[R]{\footnotesize IGTP - Clinical Data Manager}
   - \fancyfoot[C]{\thepage}
   - \definecolor{dm1blue}{HTML}{1565C0}
   - \hypersetup{colorlinks=true, linkcolor=dm1blue, urlcolor=dm1blue}
@@ -38,9 +38,16 @@ header-includes:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{data_flow/data_flow_diagram.png}
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{data_flow/data_flow_diagram.png}
 \caption{System Data Flow Diagram. Seven-layer architecture from patient mobile app and clinician portal through API services, Identity and Access Management (Keycloak), operational database, de-identification pipelines, OMOP CDM warehouse, to observability and audit logging.}
 \label{fig:dataflow}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.85\textheight,keepaspectratio]{architecture/architecture_map.png}
+\caption{Platform Architecture Map. Zoned view of all system components-Client, API \& Identity, Operational Data, Processing \& ETL, Research \& Analytics, and External \& Interoperability-with Identity \& Access Management and Observability as cross-cutting concerns. Data-flow sequence numbers indicate the order of interactions.}
+\label{fig:architecture}
 \end{figure}
 
 \begin{figure}[H]
@@ -69,19 +76,19 @@ header-includes:
 \begin{table}[H]
 \centering
 \includegraphics[width=\textwidth]{raci/raci_matrix.png}
-\caption{Responsible--Accountable--Consulted--Informed (RACI) Responsibility Matrix. Task allocation across eight roles---Clinical Data Manager, Clinical Investigators, Data Engineering, Development/Technical, Legal/DPO, Biostatistics, Study Leadership, and DevOps/SysAdmin---for all major deliverables.}
+\caption{Responsible--Accountable--Consulted--Informed (RACI) Responsibility Matrix. Task allocation across eight roles-Clinical Data Manager, Clinical Investigators, Data Engineering, Development/Technical, Legal/DPO, Biostatistics, Study Leadership, and DevOps/SysAdmin-for all major deliverables.}
 \label{tab:raci}
 \end{table}
 
 \newpage
 
 \begin{center}
-\Large\textbf{Exploratory Statistical Analysis --- Selected Figures}
+\Large\textbf{Exploratory Statistical Analysis - Selected Figures}
 \end{center}
 
 \vspace{0.3cm}
 
-\noindent The figures below are excerpts from the full interactive exploratory analysis report, available at \textbf{\textcolor{dm1blue}{\href{https://stradichenko.github.io/task-ref-2026-14/exploratory_analysis.html}{stradichenko.github.io --- Exploratory Analysis}}}.
+\noindent The figures below are excerpts from the full interactive exploratory analysis report, available at \textbf{\textcolor{dm1blue}{\href{https://stradichenko.github.io/task-ref-2026-14/exploratory_analysis.html}{stradichenko.github.io - Exploratory Analysis}}}.
 
 \vspace{0.3cm}
 
