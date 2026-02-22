@@ -16,6 +16,8 @@
 
         commonRPackages = with pkgs.rPackages; [
           tidyverse
+          rmarkdown
+          knitr
           remotes
           devtools
         ];

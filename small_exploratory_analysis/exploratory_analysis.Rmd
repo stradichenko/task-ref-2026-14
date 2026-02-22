@@ -12,10 +12,6 @@ output:
     fig_width: 10
     fig_height: 6
     self_contained: true
-  github_document:
-    toc: true
-    toc_depth: 3
-    html_preview: false
 always_allow_html: true
 ---
 

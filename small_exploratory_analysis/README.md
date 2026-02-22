@@ -11,7 +11,6 @@ modelling, using publicly available synthetic CDISC data.
 | Format | Link |
 |:---|:---|
 | **GitHub Pages** (best experience) | [View online](https://stradichenko.github.io/task-ref-2026-14/exploratory_analysis.html) |
-| **GitHub Markdown** | [exploratory_analysis.md](exploratory_analysis.md) — renders directly on GitHub with figures |
 | **Source** | [exploratory_analysis.Rmd](exploratory_analysis.Rmd) |
 
 > The GitHub Pages version includes a floating table of contents, code folding,
@@ -33,10 +32,7 @@ Rscript -e 'rmarkdown::render("small_exploratory_analysis/exploratory_analysis.R
 | File                         | Purpose                                          |
 |:-----------|:-----------------|
 | `exploratory_analysis.Rmd`   | Source document (narrative + code)                |
-| `exploratory_analysis.md`    | GitHub-rendered output (auto-generated)           |
-| `figures/`                   | Plot PNGs embedded in the rendered document       |
-| `exploratory_analysis.R`     | Standalone R script (original, kept for reference)|
-| `plots/`                     | PDF plots from the standalone script              |
+| `figures/`                   | Plot PNGs embedded in the annex PDF               |
 
 ## Analysis progression
 

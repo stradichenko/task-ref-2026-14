@@ -22,7 +22,6 @@ env/
 .Rproj.user/
 
 # ── Nix ─────────────────────────────────────────────────────────────
-flake.lock
 result
 
 # ── OS / editor artefacts ───────────────────────────────────────────
@@ -35,3 +34,8 @@ Thumbs.db
 
 # ── draw.io backup files ───────────────────────────────────────────
 .$*.bkp
+
+# ── Intentionally tracked artefacts (do NOT ignore) ────────────────
+# - *.png  diagrams   → referenced by \includegraphics in report/annex PDFs
+# - docs/  HTML       → served via GitHub Pages
+# - *.drawio          → editable architecture diagram
