@@ -6,6 +6,8 @@ on:
     paths:
       - 'small_exploratory_analysis/exploratory_analysis.Rmd'
       - '.github/workflows/pages.yml'
+      - 'flake.nix'
+      - 'flake.lock'
   workflow_dispatch:          # allow manual trigger
 
 permissions:
