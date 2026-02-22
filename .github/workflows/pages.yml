@@ -2,7 +2,7 @@ name: Render and Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'small_exploratory_analysis/exploratory_analysis.Rmd'
       - '.github/workflows/pages.yml'

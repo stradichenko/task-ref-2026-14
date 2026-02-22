@@ -15,7 +15,7 @@ modelling, using publicly available synthetic CDISC data.
 
 > The GitHub Pages version includes a floating table of contents, code folding,
 > and full-resolution figures. It is automatically re-deployed on every push to
-> `main` via a [GitHub Actions workflow](../.github/workflows/pages.yml).
+> `master` via a [GitHub Actions workflow](../.github/workflows/pages.yml).
 
 ## Reproduce locally
 
