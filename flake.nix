@@ -18,6 +18,12 @@
           tidyverse
           rmarkdown
           knitr
+          survival
+          gridExtra
+          broom
+          scales
+          plotly
+          htmltools
           remotes
           devtools
         ];
@@ -103,7 +109,7 @@
             echo "  Bash       : $(bash --version | head -1)"
             echo "  Pandoc     : $(pandoc --version | head -1)"
             echo "  RStudio    : run 'rstudio' to launch"
-            echo "  R packages : tidyverse, remotes, devtools, random.cdisc.data"
+            echo "  R packages : tidyverse, survival, gridExtra, broom, scales, plotly, rmarkdown, knitr, random.cdisc.data"
             echo "  Report     : pandoc report.md -o report.pdf --pdf-engine=xelatex"
             echo ""
           '';
